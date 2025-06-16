@@ -55,11 +55,13 @@ export function UpdateTask({
 				});
 				setOpen(false);
 			}
-		} catch ({ data }) {
-			toast({
-				title: 'Failed',
-				description: data?.message || 'Error',
-			});
+		} catch (error: unknown) {
+			if (error) {
+				toast({
+					title: 'Failed',
+					description: 'Error',
+				});
+			}
 		}
 	}
 	return (

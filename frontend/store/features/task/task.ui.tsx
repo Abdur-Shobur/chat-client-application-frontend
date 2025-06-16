@@ -104,10 +104,10 @@ export function AuthTab() {
 
 	async function regOnSubmit(data: z.infer<typeof RegFormSchema>) {
 		console.log(data);
-		try {
-			const response = await registration(data).unwrap();
-			console.log(response);
-		} catch (error: unknown) {}
+		// try {
+		// 	const response = await registration(data).unwrap();
+		// 	console.log(response);
+		// } catch (error: unknown) {}
 		toast({
 			title: 'You submitted the following values:',
 			description: (

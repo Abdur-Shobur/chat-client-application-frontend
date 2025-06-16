@@ -41,6 +41,12 @@ async function refreshAccessToken(token: any) {
 			refreshToken: tokens?.data?.refreshToken ?? token?.token?.refreshToken, // Fall back to old refresh token
 		};
 	} catch (error) {
+		if (error) {
+			return {
+				...token,
+				error: 'RefreshAccessTokenError',
+			};
+		}
 		return {
 			...token,
 			error: 'RefreshAccessTokenError',

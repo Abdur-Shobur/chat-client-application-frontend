@@ -51,11 +51,13 @@ export function CreateTask() {
 				setOpen(false);
 				form.reset();
 			}
-		} catch ({ data }) {
-			toast({
-				title: 'Failed',
-				description: data?.message || 'Error',
-			});
+		} catch (error) {
+			if (error) {
+				toast({
+					title: 'Failed',
+					description: 'Error',
+				});
+			}
 		}
 	}
 	return (

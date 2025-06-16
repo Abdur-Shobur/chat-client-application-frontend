@@ -3,7 +3,7 @@ import { AuthType } from './auth.interface';
 
 export const api = apiSlice.injectEndpoints({
 	endpoints: (builder) => ({
-		login: builder.mutation<AuthType, undefined>({
+		login: builder.mutation<AuthType, { email: string; password: string }>({
 			query: (payload) => ({
 				url: `auth/login`,
 				method: 'POST',
@@ -13,7 +13,10 @@ export const api = apiSlice.injectEndpoints({
 		}),
 
 		// auth registration
-		registration: builder.mutation<AuthType, AuthType>({
+		registration: builder.mutation<
+			AuthType,
+			{ email: string; password: string }
+		>({
 			query: (payload) => ({
 				url: `auth/register`,
 				method: 'POST',

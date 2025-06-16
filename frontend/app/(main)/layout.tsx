@@ -22,8 +22,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 					defaultLayout={defaultLayout}
 					defaultCollapsed={defaultCollapsed}
 					navCollapsedSize={4}
-					children={children}
-				/>
+				>
+					{children}
+				</Mail>
 			</div>
 		</>
 	);

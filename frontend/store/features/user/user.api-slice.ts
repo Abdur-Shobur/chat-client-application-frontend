@@ -9,7 +9,10 @@ export const api = apiSlice.injectEndpoints({
 			providesTags: ['Users'],
 		}),
 
-		storeUser: builder.mutation<UserType, undefined>({
+		storeUser: builder.mutation<
+			UserType,
+			{ username: string; password: string }
+		>({
 			query: (payload) => ({
 				url: `users`,
 				method: 'POST',

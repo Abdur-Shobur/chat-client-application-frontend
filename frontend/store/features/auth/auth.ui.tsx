@@ -53,10 +53,8 @@ export function AuthTab() {
 	const router = useRouter();
 
 	// Login
-	const [
-		login,
-		{ isLoading: loginLoading, isError: isLoginError, error: loginError },
-	] = useLoginMutation();
+	const [login, { isLoading: loginLoading, isError: isLoginError }] =
+		useLoginMutation();
 	const form = useForm<z.infer<typeof FormSchema>>({
 		resolver: zodResolver(FormSchema),
 		defaultValues: { email: '', password: '' },
@@ -78,19 +76,16 @@ export function AuthTab() {
 		} catch (error) {
 			toast({
 				title: 'Login failed',
-				description: loginError?.data?.message || 'Error',
+				description: 'Error',
 			});
 		}
 	}
 
 	// Registration
-	const [
-		registration,
-		{ isLoading: regLoading, isError: regIsError, error: regError },
-	] = useRegistrationMutation();
+	const [registration, { isLoading: regLoading }] = useRegistrationMutation();
 	const regForm = useForm<z.infer<typeof RegFormSchema>>({
 		resolver: zodResolver(RegFormSchema),
-		defaultValues: { username: '', password: '', confirmPassword: '' },
+		defaultValues: { name: '', password: '', confirmPassword: '', email: '' },
 	});
 
 	async function regOnSubmit(data: z.infer<typeof RegFormSchema>) {
@@ -109,7 +104,7 @@ export function AuthTab() {
 		} catch (error) {
 			toast({
 				title: 'Registration failed',
-				description: regError?.data?.message || 'Error',
+				description: 'Error',
 			});
 		}
 	}

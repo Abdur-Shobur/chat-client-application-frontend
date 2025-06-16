@@ -40,7 +40,7 @@ export function UserAction({ user }: { user: UserType }) {
 						onClick={() => {
 							apiDelete({
 								deleting: deleteUser,
-								id: user.id,
+								id: user._id,
 							});
 						}}
 					>

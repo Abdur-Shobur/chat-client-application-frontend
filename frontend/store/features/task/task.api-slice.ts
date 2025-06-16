@@ -9,7 +9,10 @@ export const api = apiSlice.injectEndpoints({
 			providesTags: ['Tasks'],
 		}),
 
-		storeTask: builder.mutation<TaskType, undefined>({
+		storeTask: builder.mutation<
+			TaskType,
+			{ title: string; description: string }
+		>({
 			query: (payload) => ({
 				url: `tasks`,
 				method: 'POST',

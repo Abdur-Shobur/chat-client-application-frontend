@@ -40,11 +40,11 @@ export function UpdateUser({
 	const [login, { isLoading: loginLoading }] = useUpdateUserMutation();
 	const form = useForm<z.infer<typeof FormSchema>>({
 		resolver: zodResolver(FormSchema),
-		defaultValues: { username: user.username },
+		defaultValues: { username: user.name },
 	});
 	async function onSubmit(data: z.infer<typeof FormSchema>) {
 		try {
-			const response = await login({ ...data, id: user.id }).unwrap();
+			const response = await login({ ...data, id: user._id }).unwrap();
 			if (response) {
 				toast({
 					title: 'Success',
@@ -52,11 +52,13 @@ export function UpdateUser({
 				});
 				setOpen(false);
 			}
-		} catch ({ data }) {
-			toast({
-				title: 'Failed',
-				description: data?.message || 'Error',
-			});
+		} catch (error: unknown) {
+			if (error) {
+				toast({
+					title: 'Failed',
+					description: 'Error',
+				});
+			}
 		}
 	}
 	return (

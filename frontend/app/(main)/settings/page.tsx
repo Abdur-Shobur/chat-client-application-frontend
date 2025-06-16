@@ -1,11 +1,7 @@
 import * as React from 'react';
-import { ResizableHandle, ResizablePanel } from '@/components/ui/resizable';
+import { ResizablePanel } from '@/components/ui/resizable';
 import { cookies } from 'next/headers';
-interface MailProps {
-	defaultLayout: number[] | undefined;
-	defaultCollapsed?: boolean;
-	navCollapsedSize: number;
-}
+
 export default function Page() {
 	const layout = cookies().get('react-resizable-panels:layout:mail');
 	const defaultLayout = layout ? JSON.parse(layout.value) : undefined;

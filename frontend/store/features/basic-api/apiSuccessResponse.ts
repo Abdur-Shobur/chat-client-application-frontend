@@ -37,7 +37,7 @@ export async function handleResponse(
 
 	// Show toast for error response
 	else if (response?.status === 'error' && response?.message?.error) {
-		toast({ description: response?.message?.error, type: 'error' });
+		toast({ description: response?.message?.error, type: 'foreground' });
 
 		// Call the optional onError callback
 		if (options?.onError) {
