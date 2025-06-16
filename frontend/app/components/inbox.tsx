@@ -30,10 +30,10 @@ export default function Inbox() {
 				</div>
 			</div>
 			<TabsContent value="all" className="m-0">
-				<MailList items={[mails[0]]} />
+				<MailList items={mails} />
 			</TabsContent>
 			<TabsContent value="unread" className="m-0">
-				<MailList items={[mails.filter((item) => !item.read)[0]]} />
+				<MailList items={mails.filter((item) => !item.read)} />
 			</TabsContent>
 		</Tabs>
 	);

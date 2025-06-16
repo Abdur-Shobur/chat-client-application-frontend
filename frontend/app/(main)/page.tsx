@@ -11,17 +11,24 @@ interface MailProps {
 }
 export default function Page() {
 	const layout = cookies().get('react-resizable-panels:layout:mail');
-	const defaultLayout = layout ? JSON.parse(layout.value) : undefined;
-
+	const defaultLayout: MailProps['defaultLayout'] = layout
+		? JSON.parse(layout.value)
+		: undefined;
 	return (
 		<>
 			{/* Inbox */}
-			<ResizablePanel defaultSize={defaultLayout[1]} minSize={30}>
+			<ResizablePanel
+				defaultSize={defaultLayout ? defaultLayout[1] : 32}
+				minSize={30}
+			>
 				<Inbox />
 			</ResizablePanel>
 			<ResizableHandle withHandle />
 			{/* Mail Display */}
-			<ResizablePanel defaultSize={defaultLayout[2]} minSize={30}>
+			<ResizablePanel
+				defaultSize={defaultLayout ? defaultLayout[2] : 48}
+				minSize={30}
+			>
 				<MailDisplay mail={mails[0]} />
 			</ResizablePanel>
 		</>
