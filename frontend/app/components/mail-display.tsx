@@ -52,6 +52,11 @@ interface MailDisplayProps {
 	mail: Mail | null;
 }
 
+interface Message {
+	role: 'agent' | 'user';
+	content: string;
+	timestamp: string;
+}
 export function MailDisplay({ mail }: MailDisplayProps) {
 	const today = new Date();
 	const [messages] = useState<Message[]>([
@@ -274,7 +279,11 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 												{message.timestamp}
 											</span>
 										</div>
-										<div className="p-3 bg-muted/50 rounded-lg">
+										<div
+											className={`p-3 rounded-lg ${
+												message.role === 'agent' ? 'bg-muted/50' : 'bg-blue-100'
+											}`}
+										>
 											<p className="text-sm whitespace-pre-wrap">
 												{message.content}
 											</p>
