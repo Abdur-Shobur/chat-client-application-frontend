@@ -7,7 +7,6 @@ export const apiDelete = async ({
 }) => {
 	try {
 		const response = await deleting(id);
-		console.log(response);
 	} catch (error) {
 		console.error(error);
 	}

@@ -1,57 +1,17 @@
-import { decodeJwt } from '@/lib';
-import { env } from '@/lib/env';
-import NextAuth from 'next-auth';
+import NextAuth, { User as NextAuthUser } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 
-interface TokenPayload {
-	statusCode: number;
-	success: boolean;
-	message: string;
-	data: {
-		accessToken: string;
-		refreshToken: string;
-	};
-}
-
-async function refreshAccessToken(token: any) {
-	try {
-		const response = await fetch(`${env.baseAPI}auth/refresh-token`, {
-			headers: {
-				Authorization: `Bearer ${token?.token?.refreshToken}`,
-			},
-		});
-
-		const tokens = await response.json();
-
-		console.log(tokens, 'tokens');
-
-		if (!response.ok) {
-			throw tokens;
-		}
-
-		/*const refreshedTokens = {
-        "access_token": "acess-token",
-        "expires_in": 2,
-        "refresh_token": "refresh-token"
-      }*/
-
-		//return token;
-		return {
-			accessToken: tokens?.data?.accessToken,
-			refreshToken: tokens?.data?.refreshToken ?? token?.token?.refreshToken, // Fall back to old refresh token
-		};
-	} catch (error) {
-		if (error) {
-			return {
-				...token,
-				error: 'RefreshAccessTokenError',
-			};
-		}
-		return {
-			...token,
-			error: 'RefreshAccessTokenError',
-		};
-	}
+type UserType = {
+	email: string;
+	name: string;
+	phone: string;
+	status: string;
+};
+// Define the extended user type
+interface CustomUser extends NextAuthUser {
+	accessToken?: string;
+	refreshToken?: string;
+	user: UserType;
 }
 
 const handler = NextAuth({
@@ -61,20 +21,15 @@ const handler = NextAuth({
 			credentials: {
 				token: {},
 			},
-
 			async authorize(credentials) {
-				// const parsedToken =
-				// 	credentials?.token &&
-				// 	(JSON.parse(credentials.token) as {
-				// 		success: boolean;
-				// 	});
-				const parsedToken: TokenPayload | null =
-					credentials?.token && JSON.parse(credentials?.token);
-				console.log(parsedToken);
-				if (credentials?.token && parsedToken?.success) {
+				if (credentials?.token) {
+					const parsedToken = JSON.parse(credentials.token);
+
 					return {
-						id: '123',
-						token: parsedToken?.data,
+						id: parsedToken.data.user.email,
+						accessToken: parsedToken.data.accessToken,
+						refreshToken: '', // Set this if you have a refresh token
+						user: parsedToken.data.user,
 					};
 				}
 				return null;
@@ -85,67 +40,27 @@ const handler = NextAuth({
 		strategy: 'jwt',
 	},
 	callbacks: {
-		async jwt({ token, user }: any) {
+		async jwt({ token, user }) {
+			// On initial login, `user` is available
 			if (user) {
-				const decodedToken = await decodeJwt(user?.token?.accessToken);
-				// Overwrite iat and exp based on decoded token
-				token.iat = decodedToken?.iat;
-				token.exp = decodedToken?.exp;
-				token.user = {
-					token: {
-						accessToken: user?.token?.accessToken,
-						refreshToken: user?.token.refreshToken,
-					},
+				const customUser = user as CustomUser;
+				return {
+					...token,
+					accessToken: customUser.accessToken,
+					refreshToken: customUser.refreshToken,
+					user: customUser.user,
 				};
 			}
 
-			const decodedAccessToken = await decodeJwt(
-				token.user?.token?.accessToken
-			);
-			if (decodedAccessToken) {
-				if (
-					decodedAccessToken.exp &&
-					Date.now() / 1000 < decodedAccessToken.exp
-				) {
-					return token;
-				} else {
-					const getNewToken = await refreshAccessToken(token?.user);
-					const decodedToken = await decodeJwt(getNewToken?.accessToken);
-					// Overwrite iat and exp based on decoded token
-					token.iat = decodedToken?.iat;
-					token.exp = decodedToken?.exp;
-					token.user = {
-						token: {
-							accessToken: getNewToken?.accessToken,
-							refreshToken: getNewToken.refreshToken,
-						},
-					};
-					return token;
-				}
-			} else {
-				// handle invalid token case
-				return null;
-			}
+			return token;
 		},
 
-		async session({ session, token }: { session: any; token: any }) {
-			// Attach the JWT token and user details to the session
-			if (token.user && token.user?.token) {
-				const decodedToken = await decodeJwt(token?.user?.token?.accessToken);
+		async session({ session, token }) {
+			// Map token properties to session
+			session.accessToken = token.accessToken as string;
+			session.refreshToken = token.refreshToken as string;
+			session.user = token.user as UserType;
 
-				if (decodedToken) {
-					session.user = {
-						...decodedToken,
-					};
-					delete session.user.iat;
-					delete session.user.exp;
-				}
-
-				session.isLoggedIn = true;
-				session.accessToken = token.user?.token?.accessToken;
-			} else {
-				session.isLoggedIn = false;
-			}
 			return session;
 		},
 	},

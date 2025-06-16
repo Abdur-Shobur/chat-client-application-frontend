@@ -22,7 +22,6 @@ export function TaskAction({ task }: { task: TaskType }) {
 	const handelStatus = async (id: string, status: typeof task.status) => {
 		try {
 			const response = await statusUpdate({ id, status });
-			console.log(response);
 		} catch (error) {
 			console.error(error);
 		}

@@ -42,8 +42,17 @@ const RegFormSchema = z
 		path: ['confirmPassword'],
 	});
 
+// Basic phone number regex (you can customize it)
+const phoneRegex = /^[0-9]{10,15}$/;
+
 const FormSchema = z.object({
-	email: z.string().email({ message: 'Email is required' }),
+	email: z
+		.string()
+		.min(1, { message: 'Email or phone is required' })
+		.refine(
+			(val) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) || phoneRegex.test(val),
+			{ message: 'Must be a valid email or phone number' }
+		),
 	password: z
 		.string()
 		.min(8, { message: 'Password must be at least 8 characters.' }),
@@ -63,6 +72,7 @@ export function AuthTab() {
 	async function onSubmit(data: z.infer<typeof FormSchema>) {
 		try {
 			const response = await login(data).unwrap();
+			console.log(response);
 			const result = await signIn('credentials', {
 				token: JSON.stringify(response),
 				redirect: false,
@@ -74,9 +84,31 @@ export function AuthTab() {
 				toast({ title: 'Login successful!' });
 			}
 		} catch (error) {
+			// Narrow the type
+			if (
+				typeof error === 'object' &&
+				error !== null &&
+				'status' in error &&
+				'data' in error &&
+				typeof (error as any).data === 'object' &&
+				(error as any).data !== null &&
+				'message' in (error as any).data
+			) {
+				const err = error as { status: number; data: { message: string } };
+
+				if (err.status === 404) {
+					toast({
+						title: 'Login failed',
+						description: err.data.message,
+					});
+					return;
+				}
+			}
+
+			// Fallback toast
 			toast({
-				title: 'Login failed',
-				description: 'Error',
+				title: 'Unexpected error',
+				description: 'Something went wrong. Please try again.',
 			});
 		}
 	}
@@ -121,7 +153,7 @@ export function AuthTab() {
 					<CardHeader>
 						<CardTitle>Login</CardTitle>
 						<CardDescription>
-							Enter your email and password to log in.
+							Enter your email or phone and password to log in.
 						</CardDescription>
 					</CardHeader>
 					<CardContent>
@@ -135,13 +167,15 @@ export function AuthTab() {
 									name="email"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel htmlFor="login-email">Email</FormLabel>
+											<FormLabel htmlFor="login-email">
+												Email or phone
+											</FormLabel>
 											<FormControl>
 												<Input
 													id="login-email"
 													autoComplete="off"
 													type="email"
-													placeholder="email"
+													placeholder="Email or Phone"
 													{...field}
 												/>
 											</FormControl>

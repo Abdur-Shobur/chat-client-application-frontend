@@ -71,7 +71,7 @@ export function AuthTab() {
 	});
 
 	function onSubmit(data: z.infer<typeof FormSchema>) {
-		console.log(data);
+		(data);
 		toast({
 			title: 'You submitted the following values:',
 			description: (
@@ -103,7 +103,6 @@ export function AuthTab() {
 	});
 
 	async function regOnSubmit(data: z.infer<typeof RegFormSchema>) {
-		console.log(data);
 		// try {
 		// 	const response = await registration(data).unwrap();
 		// 	console.log(response);

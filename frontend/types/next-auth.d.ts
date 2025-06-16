@@ -1,6 +1,11 @@
 import 'next-auth/jwt';
 import { DefaultJWT } from 'next-auth/jwt';
-
+type UserType = {
+	email: string;
+	name: string;
+	phone: string;
+	status: string;
+};
 declare module 'next-auth' {
 	/**
 	 * Returned by `useSession`, `getSession` and received as a prop on the `SessionProvider` React Context
