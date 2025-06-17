@@ -12,7 +12,6 @@ export class MongooseExceptionFilter implements ExceptionFilter {
   catch(exception: any, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
-
     const formatErrorResponse = (
       statusCode: number,
       message: string,
@@ -35,27 +34,41 @@ export class MongooseExceptionFilter implements ExceptionFilter {
 
       return formatErrorResponse(
         HttpStatus.BAD_REQUEST,
-        'Validation failed',
+        'Validation Input Error',
         errors,
       );
     }
 
     // Mongoose ValidationError
     if (exception.name === 'ValidationError') {
-      const errors = Object.entries(exception.errors).map(([field, error]) => ({
-        field,
-        message: (error as any).message,
-      }));
+      const errors = Object.entries(exception.errors).map(([field, error]) => {
+        let message = (error as any).message;
+
+        // Check if it's a CastError or contains a nested CastError (like for [ObjectId])
+        if ((error as any).name === 'CastError') {
+          message = `Invalid ID format.`;
+        } else if ((error as any).reason?.name === 'CastError') {
+          message = `Invalid ID format.`;
+        }
+
+        return {
+          field,
+          message,
+        };
+      });
 
       return formatErrorResponse(
         HttpStatus.BAD_REQUEST,
-        'Validation failed',
+        'Validation Error',
         errors,
       );
     }
 
     // Mongoose CastError (Invalid ObjectId)
-    if (exception.name === 'CastError' && exception.kind === 'ObjectId') {
+    if (
+      exception.name === 'CastError' &&
+      ['ObjectId', '[ObjectId]'].includes(exception.kind)
+    ) {
       return formatErrorResponse(HttpStatus.BAD_REQUEST, 'Invalid ID format', [
         {
           field: exception.path,

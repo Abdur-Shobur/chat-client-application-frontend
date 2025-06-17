@@ -85,10 +85,18 @@ export function Mail({
 								href: '/',
 							},
 							{
-								title: 'Drafts',
+								title: 'Group',
 								label: '9',
 								icon: File,
 								variant: 'ghost',
+								href: '/group',
+							},
+							{
+								title: 'Members',
+								label: '9',
+								icon: File,
+								variant: 'ghost',
+								href: '/members',
 							},
 						]}
 					/>

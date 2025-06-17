@@ -42,7 +42,7 @@ async function bootstrap() {
       forbidNonWhitelisted: false,
       transform: true, // Automatically transforms payloads to match DTOs
       exceptionFactory: (errors) => {
-        console.log('Validation errors:', errors); // Log validation errors
+        console.log('Validation errors:', errors);
         return errors;
       },
     }),

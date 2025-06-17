@@ -10,7 +10,7 @@ export interface IRole {
   _id?: string;
 }
 
-// for   status
+// for status
 export enum IRoleStatus {
   Active = 'active',
   Inactive = 'inactive',

@@ -13,14 +13,14 @@ export class ZodValidationPipe implements PipeTransform {
       if (error instanceof ZodError) {
         throw new BadRequestException({
           statusCode: 400,
-          error: 'Validation failed',
+          error: 'Unprocessable Entity',
           message: error.errors.map((err) => ({
             path: err.path.join('.'),
             message: err.message,
           })),
         });
       }
-      throw new BadRequestException('Validation failed');
+      throw new BadRequestException('Invalid input data');
     }
   }
 }
