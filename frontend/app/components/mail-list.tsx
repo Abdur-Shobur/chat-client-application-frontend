@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Mail } from '../data';
 import { useMail } from '../use-mail';
+import Link from 'next/link';
 
 interface MailListProps {
 	items: Mail[];
@@ -18,7 +19,8 @@ export function MailList({ items }: MailListProps) {
 		<ScrollArea className="h-[85vh]">
 			<div className="flex flex-col gap-2 p-4 pt-0">
 				{items.map((item) => (
-					<button
+					<Link
+						href={`/admin/inbox/${item.id}`}
 						key={item.id}
 						className={cn(
 							'flex flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm transition-all hover:bg-accent',
@@ -66,7 +68,7 @@ export function MailList({ items }: MailListProps) {
 								))}
 							</div>
 						) : null}
-					</button>
+					</Link>
 				))}
 			</div>
 		</ScrollArea>

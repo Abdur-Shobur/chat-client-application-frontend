@@ -10,7 +10,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IGroupStatus } from '../interfaces/group.interfaces';
 
 export class CreateGroupDto {
-  @ApiProperty({ example: 'Test Users' })
+  @ApiProperty({ example: 'Test Group' })
   @IsString()
   name: string;
 
@@ -23,7 +23,7 @@ export class CreateGroupDto {
   iconUrl?: string;
 
   @ApiProperty({ example: '67b2c9fc32c98e2ba9cce8d2' })
-  @IsString()
+  @IsOptional()
   createdBy: string;
 
   @ApiPropertyOptional({ enum: ['public', 'private'] })

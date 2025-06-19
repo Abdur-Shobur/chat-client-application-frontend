@@ -25,6 +25,8 @@ import { Role, Roles } from 'src/role/decorator';
 import { GlobalSettingService } from 'src/global-setting/global-setting.service';
 import { RoleService } from 'src/role/role.service';
 import { LoginUserDto } from './auth.login.dto';
+import { RoleType } from 'src/type';
+import { IRoleType } from 'src/role/interfaces/role.interfaces';
 
 @UseGuards(AuthGuard)
 @Controller('auth')
@@ -54,7 +56,7 @@ export class AuthController {
 
     const data = await this.userService.create({
       ...createUserDto,
-      status: IUserStatus.Inactive,
+      status: IUserStatus.Active,
       password: hashedPassword,
       role: defaultRole,
     });
@@ -63,29 +65,30 @@ export class AuthController {
     const payload = {
       username: data.name,
       _id: data._id,
+      role: IRoleType.User,
     };
     const accessToken = this.jwtService.sign(payload);
 
     // Generate OTP
-    const otp = await this.otpService.generateOtp(
-      data.email,
-      IOtpType.VerifyEmail,
-    );
+    // const otp = await this.otpService.generateOtp(
+    //   data.email,
+    //   IOtpType.VerifyEmail,
+    // );
 
     // Send OTP via email
     // await this.emailService.sendOtp(data.email, otp);
 
     // Remove password from the response
     delete data.password;
-
+    data.role = IRoleType.User;
+    console.log({ data });
     return ResponseHelper.success(
       { user: data, accessToken },
-      'Please verify your email',
+      'User Register successfully',
     );
   }
 
   @Get('info')
-  @UseGuards(AuthGuard)
   async info(@Req() req: any) {
     return ResponseHelper.success(req.user);
   }

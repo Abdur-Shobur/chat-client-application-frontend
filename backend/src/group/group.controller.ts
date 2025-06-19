@@ -8,6 +8,7 @@ import {
   Delete,
   Query,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { GroupService } from './group.service';
 import { CreateGroupDto } from './dto/create-group.dto';
@@ -17,7 +18,7 @@ import { AuthGuard } from 'src/helper/auth-guard';
 import { Role, Roles } from 'src/role/decorator';
 import { UpdateStatusDto } from './dto/update-status.dto'; // Optional, if group has status
 
-// @UseGuards(AuthGuard)
+@UseGuards(AuthGuard)
 @Controller('group')
 export class GroupController {
   constructor(private readonly groupService: GroupService) {}
@@ -27,8 +28,13 @@ export class GroupController {
    */
   @Post()
   // @Roles(Role.GROUP_CREATE)
-  async create(@Body() createGroupDto: CreateGroupDto) {
-    const result = await this.groupService.create(createGroupDto);
+  async create(@Req() req: any, @Body() createGroupDto: CreateGroupDto) {
+    console.log(req.user);
+    const data = {
+      ...createGroupDto,
+      createdBy: req.user._id,
+    };
+    const result = await this.groupService.create(data);
     if (!result) return ResponseHelper.error('Group not created');
     return ResponseHelper.success(result, 'Group created successfully');
   }

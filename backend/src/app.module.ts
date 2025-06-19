@@ -19,6 +19,7 @@ import { TestZodModule } from './test-zod/test-zod.module';
 import { GlobalSettingModule } from './global-setting/global-setting.module';
 import { MigrationModule } from './migration/migration.module';
 import { GroupModule } from './group/group.module';
+import { MessageModule } from './message/message.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { GroupModule } from './group/group.module';
     GlobalSettingModule,
     MigrationModule,
     GroupModule,
+    MessageModule,
   ],
   controllers: [AppController],
   providers: [AppService, AuthGuard, AuthOnlyPermission],

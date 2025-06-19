@@ -9,13 +9,13 @@ import { IUser, IUserStatus } from '../interfaces/user.interfaces';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateUserDto implements IUser {
-  @ApiProperty()
+  @ApiProperty({ example: 'John Doe' })
   @IsString()
   @MinLength(2, { message: 'Name must be at least 2 characters long' })
   @MaxLength(120, { message: 'Name must be at most 120 characters long' })
   name: string;
 
-  @ApiProperty()
+  @ApiProperty({ example: 'example@example.com' })
   @IsString()
   @MinLength(2, { message: 'email must be at least 2 characters long' })
   @MaxLength(120, {
@@ -23,7 +23,7 @@ export class CreateUserDto implements IUser {
   })
   email: string;
 
-  @ApiProperty()
+  @ApiProperty({ example: '1234567890' })
   @IsString()
   @MinLength(2, { message: 'phone must be at least 2 characters long' })
   @MaxLength(15, {
@@ -31,19 +31,19 @@ export class CreateUserDto implements IUser {
   })
   phone: string;
 
-  @ApiProperty()
+  @ApiProperty({ example: '67b2c25d6b596336d2a471bf' })
   @IsString()
   @IsOptional()
   role: string;
 
-  @ApiProperty()
+  @ApiProperty({ example: 'password' })
   @IsString()
   @MaxLength(120, {
     message: 'password type must be at most 120 characters long',
   })
   password: string;
 
-  @ApiProperty()
+  @ApiProperty({ example: IUserStatus.Active })
   @IsOptional()
   @IsEnum(IUserStatus, {
     message: '{VALUE} is not a valid status',

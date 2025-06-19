@@ -41,12 +41,14 @@ import { Textarea } from '@/components/ui/textarea';
 import {
 	Tooltip,
 	TooltipContent,
+	TooltipProvider,
 	TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Mail } from '../data';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import InboxThread from './inbox-thread';
 
 interface MailDisplayProps {
 	mail: Mail | null;
@@ -70,164 +72,144 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 			content: "Hi, I'd like to check my bill.",
 			timestamp: '4:08:37 PM',
 		},
-		{
-			role: 'agent',
-			content:
-				"Please hold for a second.\n\nOk, I can help you with that\n\nI'm pulling up your current bill information\n\nYour current bill is $150, and it is due on August 31, 2024.\n\nIf you need more details, feel free to ask!",
-			timestamp: '4:08:37 PM',
-		},
-		{
-			role: 'agent',
-			content: 'Hello, I am a generative AI agent. How may I assist you today?',
-			timestamp: '4:08:28 PM',
-		},
-		{
-			role: 'user',
-			content: "Hi, I'd like to check my bill.",
-			timestamp: '4:08:37 PM',
-		},
-		{
-			role: 'agent',
-			content:
-				"Please hold for a second.\n\nOk, I can help you with that\n\nI'm pulling up your current bill information\n\nYour current bill is $150, and it is due on August 31, 2024.\n\nIf you need more details, feel free to ask!",
-			timestamp: '4:08:37 PM',
-		},
 	]);
 	return (
 		<div className="flex h-full flex-col">
-			<div className="flex items-center p-2">
-				<div className="flex items-center gap-2">
-					<Tooltip>
-						<TooltipTrigger asChild>
-							<Button variant="ghost" size="icon" disabled={!mail}>
-								<Archive className="h-4 w-4" />
-								<span className="sr-only">Archive</span>
-							</Button>
-						</TooltipTrigger>
-						<TooltipContent>Archive</TooltipContent>
-					</Tooltip>
-					<Tooltip>
-						<TooltipTrigger asChild>
-							<Button variant="ghost" size="icon" disabled={!mail}>
-								<ArchiveX className="h-4 w-4" />
-								<span className="sr-only">Move to junk</span>
-							</Button>
-						</TooltipTrigger>
-						<TooltipContent>Move to junk</TooltipContent>
-					</Tooltip>
-					<Tooltip>
-						<TooltipTrigger asChild>
-							<Button variant="ghost" size="icon" disabled={!mail}>
-								<Trash2 className="h-4 w-4" />
-								<span className="sr-only">Move to trash</span>
-							</Button>
-						</TooltipTrigger>
-						<TooltipContent>Move to trash</TooltipContent>
-					</Tooltip>
-					<Separator orientation="vertical" className="mx-1 h-6" />
-					<Tooltip>
-						<Popover>
-							<PopoverTrigger asChild>
-								<TooltipTrigger asChild>
-									<Button variant="ghost" size="icon" disabled={!mail}>
-										<Clock className="h-4 w-4" />
-										<span className="sr-only">Snooze</span>
-									</Button>
-								</TooltipTrigger>
-							</PopoverTrigger>
-							<PopoverContent className="flex w-[535px] p-0">
-								<div className="flex flex-col gap-2 border-r px-2 py-4">
-									<div className="px-4 text-sm font-medium">Snooze until</div>
-									<div className="grid min-w-[250px] gap-1">
-										<Button
-											variant="ghost"
-											className="justify-start font-normal"
-										>
-											Later today{' '}
-											<span className="ml-auto text-muted-foreground">
-												{format(addHours(today, 4), 'E, h:m b')}
-											</span>
+			<TooltipProvider>
+				<div className="flex items-center p-2">
+					<div className="flex items-center gap-2">
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<Button variant="ghost" size="icon" disabled={!mail}>
+									<Archive className="h-4 w-4" />
+									<span className="sr-only">Archive</span>
+								</Button>
+							</TooltipTrigger>
+							<TooltipContent>Archive</TooltipContent>
+						</Tooltip>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<Button variant="ghost" size="icon" disabled={!mail}>
+									<ArchiveX className="h-4 w-4" />
+									<span className="sr-only">Move to junk</span>
+								</Button>
+							</TooltipTrigger>
+							<TooltipContent>Move to junk</TooltipContent>
+						</Tooltip>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<Button variant="ghost" size="icon" disabled={!mail}>
+									<Trash2 className="h-4 w-4" />
+									<span className="sr-only">Move to trash</span>
+								</Button>
+							</TooltipTrigger>
+							<TooltipContent>Move to trash</TooltipContent>
+						</Tooltip>
+						<Separator orientation="vertical" className="mx-1 h-6" />
+						<Tooltip>
+							<Popover>
+								<PopoverTrigger asChild>
+									<TooltipTrigger asChild>
+										<Button variant="ghost" size="icon" disabled={!mail}>
+											<Clock className="h-4 w-4" />
+											<span className="sr-only">Snooze</span>
 										</Button>
-										<Button
-											variant="ghost"
-											className="justify-start font-normal"
-										>
-											Tomorrow
-											<span className="ml-auto text-muted-foreground">
-												{format(addDays(today, 1), 'E, h:m b')}
-											</span>
-										</Button>
-										<Button
-											variant="ghost"
-											className="justify-start font-normal"
-										>
-											This weekend
-											<span className="ml-auto text-muted-foreground">
-												{format(nextSaturday(today), 'E, h:m b')}
-											</span>
-										</Button>
-										<Button
-											variant="ghost"
-											className="justify-start font-normal"
-										>
-											Next week
-											<span className="ml-auto text-muted-foreground">
-												{format(addDays(today, 7), 'E, h:m b')}
-											</span>
-										</Button>
+									</TooltipTrigger>
+								</PopoverTrigger>
+								<PopoverContent className="flex w-[535px] p-0">
+									<div className="flex flex-col gap-2 border-r px-2 py-4">
+										<div className="px-4 text-sm font-medium">Snooze until</div>
+										<div className="grid min-w-[250px] gap-1">
+											<Button
+												variant="ghost"
+												className="justify-start font-normal"
+											>
+												Later today{' '}
+												<span className="ml-auto text-muted-foreground">
+													{format(addHours(today, 4), 'E, h:m b')}
+												</span>
+											</Button>
+											<Button
+												variant="ghost"
+												className="justify-start font-normal"
+											>
+												Tomorrow
+												<span className="ml-auto text-muted-foreground">
+													{format(addDays(today, 1), 'E, h:m b')}
+												</span>
+											</Button>
+											<Button
+												variant="ghost"
+												className="justify-start font-normal"
+											>
+												This weekend
+												<span className="ml-auto text-muted-foreground">
+													{format(nextSaturday(today), 'E, h:m b')}
+												</span>
+											</Button>
+											<Button
+												variant="ghost"
+												className="justify-start font-normal"
+											>
+												Next week
+												<span className="ml-auto text-muted-foreground">
+													{format(addDays(today, 7), 'E, h:m b')}
+												</span>
+											</Button>
+										</div>
 									</div>
-								</div>
-								<div className="p-2">{/* <Calendar /> */}</div>
-							</PopoverContent>
-						</Popover>
-						<TooltipContent>Snooze</TooltipContent>
-					</Tooltip>
+									<div className="p-2">{/* <Calendar /> */}</div>
+								</PopoverContent>
+							</Popover>
+							<TooltipContent>Snooze</TooltipContent>
+						</Tooltip>
+					</div>
+					<div className="ml-auto flex items-center gap-2">
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<Button variant="ghost" size="icon" disabled={!mail}>
+									<Reply className="h-4 w-4" />
+									<span className="sr-only">Reply</span>
+								</Button>
+							</TooltipTrigger>
+							<TooltipContent>Reply</TooltipContent>
+						</Tooltip>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<Button variant="ghost" size="icon" disabled={!mail}>
+									<ReplyAll className="h-4 w-4" />
+									<span className="sr-only">Reply all</span>
+								</Button>
+							</TooltipTrigger>
+							<TooltipContent>Reply all</TooltipContent>
+						</Tooltip>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<Button variant="ghost" size="icon" disabled={!mail}>
+									<Forward className="h-4 w-4" />
+									<span className="sr-only">Forward</span>
+								</Button>
+							</TooltipTrigger>
+							<TooltipContent>Forward</TooltipContent>
+						</Tooltip>
+					</div>
+					<Separator orientation="vertical" className="mx-2 h-6" />
+					<DropdownMenu>
+						<DropdownMenuTrigger asChild>
+							<Button variant="ghost" size="icon" disabled={!mail}>
+								<MoreVertical className="h-4 w-4" />
+								<span className="sr-only">More</span>
+							</Button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align="end">
+							<DropdownMenuItem>Mark as unread</DropdownMenuItem>
+							<DropdownMenuItem>Star thread</DropdownMenuItem>
+							<DropdownMenuItem>Add label</DropdownMenuItem>
+							<DropdownMenuItem>Mute thread</DropdownMenuItem>
+						</DropdownMenuContent>
+					</DropdownMenu>
 				</div>
-				<div className="ml-auto flex items-center gap-2">
-					<Tooltip>
-						<TooltipTrigger asChild>
-							<Button variant="ghost" size="icon" disabled={!mail}>
-								<Reply className="h-4 w-4" />
-								<span className="sr-only">Reply</span>
-							</Button>
-						</TooltipTrigger>
-						<TooltipContent>Reply</TooltipContent>
-					</Tooltip>
-					<Tooltip>
-						<TooltipTrigger asChild>
-							<Button variant="ghost" size="icon" disabled={!mail}>
-								<ReplyAll className="h-4 w-4" />
-								<span className="sr-only">Reply all</span>
-							</Button>
-						</TooltipTrigger>
-						<TooltipContent>Reply all</TooltipContent>
-					</Tooltip>
-					<Tooltip>
-						<TooltipTrigger asChild>
-							<Button variant="ghost" size="icon" disabled={!mail}>
-								<Forward className="h-4 w-4" />
-								<span className="sr-only">Forward</span>
-							</Button>
-						</TooltipTrigger>
-						<TooltipContent>Forward</TooltipContent>
-					</Tooltip>
-				</div>
-				<Separator orientation="vertical" className="mx-2 h-6" />
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild>
-						<Button variant="ghost" size="icon" disabled={!mail}>
-							<MoreVertical className="h-4 w-4" />
-							<span className="sr-only">More</span>
-						</Button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end">
-						<DropdownMenuItem>Mark as unread</DropdownMenuItem>
-						<DropdownMenuItem>Star thread</DropdownMenuItem>
-						<DropdownMenuItem>Add label</DropdownMenuItem>
-						<DropdownMenuItem>Mute thread</DropdownMenuItem>
-					</DropdownMenuContent>
-				</DropdownMenu>
-			</div>
+			</TooltipProvider>
 			<Separator />
 			{mail ? (
 				<div className="flex flex-1 flex-col">
@@ -244,7 +226,6 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 							</Avatar>
 							<div className="grid gap-1">
 								<div className="font-semibold">{mail.name}</div>
-								<div className="line-clamp-1 text-xs">{mail.subject}</div>
 								<div className="line-clamp-1 text-xs">
 									<span className="font-medium">Reply-To:</span> {mail.email}
 								</div>
@@ -258,8 +239,13 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 					</div>
 					<Separator />
 					<ScrollArea className="h-[calc(100vh-300px)]">
-						<div className="flex flex-col gap-2 p-4  ">
-							{messages.map((message, index) => (
+						<div className="flex flex-col gap-2 p-4  max-w-[90%] mx-auto">
+							<InboxThread
+								chatType="group"
+								currentUserId="67b2c9fc32c98e2ba9cce8d2"
+								receiverId="68541a93248dbfda08bb9aeb"
+							/>
+							{/* {messages.map((message, index) => (
 								<div
 									key={index}
 									className={cn(
@@ -306,7 +292,7 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 										)}
 									</div>
 								</div>
-							))}
+							))} */}
 						</div>
 					</ScrollArea>
 

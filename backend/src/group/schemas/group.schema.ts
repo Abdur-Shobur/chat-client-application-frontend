@@ -13,6 +13,7 @@ export type GroupDocument = HydratedDocument<Group>;
 export class Group implements IGroup {
   // name
   @Prop({
+    unique: true,
     required: false,
     minlength: [2, 'name must be at least 2 characters long'],
     maxlength: [120, 'name must be at most 120 characters long'],

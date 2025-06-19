@@ -83,7 +83,7 @@ export class MongooseExceptionFilter implements ExceptionFilter {
       const field = Object.keys(keyValue)[0];
       const value = keyValue[field];
 
-      return formatErrorResponse(HttpStatus.CONFLICT, 'Duplicate key error', [
+      return formatErrorResponse(HttpStatus.CONFLICT, 'Duplicate Value', [
         {
           field,
           message: `The value "${value}" already exists.`,

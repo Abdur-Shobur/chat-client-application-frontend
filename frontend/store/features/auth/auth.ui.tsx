@@ -31,7 +31,11 @@ const RegFormSchema = z
 		name: z
 			.string({ required_error: 'Name is required' })
 			.min(2, { message: 'Name must be at least 2 characters.' }),
-		email: z.string().email({ message: 'Email is required' }),
+		email: z.string().optional(),
+		phone: z
+			.string()
+			.regex(/^\+?[0-9]{7,15}$/, { message: 'Invalid phone number' }) // Optional: regex for phone
+			.optional(),
 		password: z
 			.string()
 			.min(8, { message: 'Password must be at least 8 characters.' }),
@@ -40,6 +44,10 @@ const RegFormSchema = z
 	.refine((data) => data.password === data.confirmPassword, {
 		message: "Passwords don't match",
 		path: ['confirmPassword'],
+	})
+	.refine((data) => data.email || data.phone, {
+		message: 'Either email or phone number is required',
+		path: ['email'], // You can use 'email' or 'phone' here
 	});
 
 // Basic phone number regex (you can customize it)
@@ -134,10 +142,24 @@ export function AuthTab() {
 				toast({ title: 'Registration successful!' });
 			}
 		} catch (error) {
-			toast({
-				title: 'Registration failed',
-				description: 'Error',
-			});
+			if (
+				error?.status === 409 &&
+				error?.data?.errors &&
+				Array.isArray(error.data.errors)
+			) {
+				error.data.errors.forEach((err: { field: string; message: string }) => {
+					regForm.setError(err.field as keyof z.infer<typeof RegFormSchema>, {
+						type: 'manual',
+						message: err.message,
+					});
+				});
+			} else {
+				toast({
+					title: 'Registration failed',
+					description: 'An unexpected error occurred.',
+					variant: 'destructive',
+				});
+			}
 		}
 	}
 
@@ -243,6 +265,19 @@ export function AuthTab() {
 											<FormLabel htmlFor="reg-email">Email</FormLabel>
 											<FormControl>
 												<Input id="reg-email" placeholder="Email" {...field} />
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+								<FormField
+									control={regForm.control}
+									name="phone"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel htmlFor="reg-phone">Phone</FormLabel>
+											<FormControl>
+												<Input id="reg-phone" placeholder="Phone" {...field} />
 											</FormControl>
 											<FormMessage />
 										</FormItem>

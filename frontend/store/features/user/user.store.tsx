@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
 	Dialog,
@@ -17,73 +20,113 @@ import {
 	FormLabel,
 	FormMessage,
 } from '@/components/ui/form';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from '@/hooks/use-toast';
 import { useStoreUserMutation } from './user.api-slice';
-import { useState } from 'react';
+
+// You may replace this with data from an API
+const mockRoles = [
+	{ _id: '67b2c25d6b596336d2a471bf', name: 'User' },
+	{ _id: '67b2c25d6b596336d2a471c0', name: 'Admin' },
+];
+
 const FormSchema = z.object({
-	username: z
-		.string()
-		.min(2, { message: 'Username must be at least 2 characters.' }),
+	name: z.string().min(2, { message: 'Name is required' }),
+	email: z.string().email({ message: 'Invalid email' }),
+	phone: z.string().min(10, { message: 'Phone must be at least 10 digits' }),
+	role: z.string().min(1, { message: 'Role is required' }),
+	status: z.enum(['active', 'inactive']),
 	password: z
 		.string()
-		.min(8, { message: 'Password must be at least 8 characters.' }),
+		.min(8, { message: 'Password must be at least 8 characters' }),
 });
+
+type FormValues = z.infer<typeof FormSchema>;
+
 export function CreateUser() {
 	const [open, setOpen] = useState(false);
 
-	// Login
-	const [login, { isLoading: loginLoading, error: loginError }] =
-		useStoreUserMutation();
-	const form = useForm<z.infer<typeof FormSchema>>({
+	const [createUser, { isLoading }] = useStoreUserMutation();
+
+	const form = useForm<FormValues>({
 		resolver: zodResolver(FormSchema),
-		defaultValues: { username: '', password: '' },
+		defaultValues: {
+			name: '',
+			email: '',
+			phone: '',
+			role: '',
+			status: 'active',
+			password: '',
+		},
 	});
-	async function onSubmit(data: z.infer<typeof FormSchema>) {
+
+	const onSubmit = async (data: FormValues) => {
 		try {
-			const response = await login(data).unwrap();
-			if (response) {
-				toast({
-					title: 'Success',
-					description: 'Success user created',
-				});
-				setOpen(false);
-			}
-		} catch (error: unknown) {
-			if (error) {
-				toast({
-					title: 'Failed',
-					description: 'Error',
-				});
-			}
+			await createUser(data).unwrap();
+			toast({
+				title: 'Success',
+				description: 'User created successfully',
+			});
+			setOpen(false);
+			form.reset();
+		} catch (error) {
+			toast({
+				title: 'Error',
+				description: 'Failed to create user',
+			});
 		}
-	}
+	};
+
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
-				<Button variant="outline">Create User</Button>
+				<Button size={'sm'} variant="outline">
+					Create User
+				</Button>
 			</DialogTrigger>
-			<DialogContent className="sm:max-w-[425px]">
+			<DialogContent className="sm:max-w-[500px]">
 				<DialogHeader>
 					<DialogTitle>Create New User</DialogTitle>
 					<DialogDescription>
-						Create New User and use it to login
+						Fill in the details to create a new user.
 					</DialogDescription>
 				</DialogHeader>
+
 				<Form {...form}>
 					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
 						<FormField
 							control={form.control}
-							name="username"
+							name="name"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel htmlFor="login-username">Username</FormLabel>
+									<FormLabel>Name</FormLabel>
+									<FormControl>
+										<Input placeholder="John Doe" {...field} />
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+
+						<FormField
+							control={form.control}
+							name="email"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Email</FormLabel>
 									<FormControl>
 										<Input
-											id="login-username"
-											placeholder="Username"
+											type="email"
+											placeholder="example@example.com"
 											{...field}
 										/>
 									</FormControl>
@@ -91,27 +134,85 @@ export function CreateUser() {
 								</FormItem>
 							)}
 						/>
+
+						<FormField
+							control={form.control}
+							name="phone"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Phone</FormLabel>
+									<FormControl>
+										<Input placeholder="1234567890" {...field} />
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+
+						<FormField
+							control={form.control}
+							name="role"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Role</FormLabel>
+									<Select onValueChange={field.onChange} value={field.value}>
+										<FormControl>
+											<SelectTrigger>
+												<SelectValue placeholder="Select role" />
+											</SelectTrigger>
+										</FormControl>
+										<SelectContent>
+											{mockRoles.map((role) => (
+												<SelectItem key={role._id} value={role._id}>
+													{role.name}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+
+						<FormField
+							control={form.control}
+							name="status"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Status</FormLabel>
+									<Select onValueChange={field.onChange} value={field.value}>
+										<FormControl>
+											<SelectTrigger>
+												<SelectValue placeholder="Select status" />
+											</SelectTrigger>
+										</FormControl>
+										<SelectContent>
+											<SelectItem value="active">Active</SelectItem>
+											<SelectItem value="inactive">Inactive</SelectItem>
+										</SelectContent>
+									</Select>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+
 						<FormField
 							control={form.control}
 							name="password"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel htmlFor="login-password">Password</FormLabel>
+									<FormLabel>Password</FormLabel>
 									<FormControl>
-										<Input
-											id="login-password"
-											placeholder="Password"
-											type="password"
-											{...field}
-										/>
+										<Input type="password" placeholder="********" {...field} />
 									</FormControl>
 									<FormMessage />
 								</FormItem>
 							)}
 						/>
-						<DialogFooter>
-							<Button disabled={loginLoading} type="submit">
-								{loginLoading ? 'Submitting...' : 'Submit'}
+
+						<DialogFooter className="pt-2">
+							<Button type="submit" disabled={isLoading}>
+								{isLoading ? 'Creating...' : 'Create'}
 							</Button>
 						</DialogFooter>
 					</form>

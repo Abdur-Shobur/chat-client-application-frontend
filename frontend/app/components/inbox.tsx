@@ -5,8 +5,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import React from 'react';
 import { MailList } from './mail-list';
 import { mails } from '../data';
+import { useChatQuery } from '@/store/features/message';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import Link from 'next/link';
+import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 export default function Inbox() {
+	const { data } = useChatQuery(undefined);
+	console.log(data?.data);
 	return (
 		<Tabs defaultValue="all">
 			<div className="flex items-center px-4 py-2">
@@ -29,12 +37,53 @@ export default function Inbox() {
 					<Input placeholder="Search" className="pl-8" />
 				</div>
 			</div>
-			<TabsContent value="all" className="m-0">
+			<ScrollArea className="h-[85vh]">
+				<div className="flex flex-col gap-2 p-4 pt-0">
+					{data?.data?.map((item) => {
+						const isGroup = item.chatType === 'group';
+						const name = isGroup
+							? item.groupInfo?.name || 'Unknown Group'
+							: item.userInfo?.name || 'Unknown User';
+						const id = isGroup ? item.groupInfo?._id : item.userInfo?._id;
+
+						return (
+							<Link
+								href={`/admin/inbox/${id}`}
+								key={id}
+								className={cn(
+									'flex flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm transition-all hover:bg-accent'
+								)}
+							>
+								<div className="flex w-full flex-col gap-1">
+									<div className="flex items-center">
+										<div className="flex items-center gap-2">
+											<div className="font-semibold">{name}</div>
+											{/* You can show unread dot here if needed */}
+										</div>
+										<div className="ml-auto text-xs text-muted-foreground">
+											{formatDistanceToNow(
+												new Date(item.lastMessage.createdAt),
+												{
+													addSuffix: true,
+												}
+											)}
+										</div>
+									</div>
+									<div className="text-xs font-medium">
+										{item.lastMessage?.text}
+									</div>
+								</div>
+							</Link>
+						);
+					})}
+				</div>
+			</ScrollArea>
+			{/* <TabsContent value="all" className="m-0">
 				<MailList items={mails} />
-			</TabsContent>
-			<TabsContent value="unread" className="m-0">
+			</TabsContent> */}
+			{/* <TabsContent value="unread" className="m-0">
 				<MailList items={mails.filter((item) => !item.read)} />
-			</TabsContent>
+			</TabsContent> */}
 		</Tabs>
 	);
 }

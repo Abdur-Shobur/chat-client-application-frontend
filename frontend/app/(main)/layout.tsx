@@ -1,16 +1,9 @@
 import React from 'react';
-import { cookies } from 'next/headers';
-import { Mail } from '../components/mail';
+import { AdminLayout } from '../components/admin-layout';
+import { UserLayout } from '../components/user-layout';
+import { useSession } from 'next-auth/react';
 export default function Layout({ children }: { children: React.ReactNode }) {
-	const layout = cookies().get('react-resizable-panels:layout:mail');
-	const collapsed = cookies().get('react-resizable-panels:collapsed');
-
-	const defaultLayout: number[] | undefined = layout
-		? JSON.parse(layout.value)
-		: undefined;
-	console.log({ defaultLayout });
-
-	const defaultCollapsed = collapsed ? JSON.parse(collapsed.value) : undefined;
+	
 	return (
 		<>
 			<div className="flex-col flex lg:hidden h-screen items-center justify-center">
@@ -22,13 +15,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 				</div>
 			</div>
 			<div className="flex-col hidden lg:flex">
-				<Mail
-					defaultLayout={defaultLayout}
-					defaultCollapsed={defaultCollapsed}
-					navCollapsedSize={4}
-				>
-					{children}
-				</Mail>
+				<AdminLayout defaultCollapsed={false}>{children}</AdminLayout>
+				<UserLayout defaultCollapsed={false}>{children}</UserLayout>
 			</div>
 		</>
 	);

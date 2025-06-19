@@ -10,7 +10,32 @@ export class UserService {
   constructor(@InjectModel(User.name) private UserModel: Model<UserDocument>) {}
 
   async create(createUserDto: CreateUserDto) {
-    const result = await this.UserModel.create(createUserDto);
+    const result = (await this.UserModel.create(createUserDto)).toJSON();
+    return result;
+  }
+
+  async findAllUser(status?: string, userId?: string) {
+    const query: Record<string, any> = {};
+
+    if (status === 'active' || status === 'inactive' || status === 'deleted') {
+      query.status = status;
+    }
+
+    if (userId) {
+      // Exclude the current user's ID
+      query._id = { $ne: userId };
+    }
+
+    const result = await this.UserModel.find(query)
+      .sort({ position: 1 })
+      .select('-password')
+      .populate({
+        path: 'role',
+        select: 'name status',
+      })
+      .lean()
+      .exec();
+
     return result;
   }
 
