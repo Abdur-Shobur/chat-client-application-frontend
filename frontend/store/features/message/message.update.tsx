@@ -20,8 +20,8 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from '@/hooks/use-toast';
-import { useUpdateUserMutation } from './message.api-slice';
 import { UserType } from './message.interface';
+import { useUpdateUserMutation } from '../user';
 const FormSchema = z.object({
 	username: z
 		.string()

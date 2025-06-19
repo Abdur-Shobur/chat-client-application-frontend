@@ -35,6 +35,14 @@ export class MessageController {
     if (!result) return ResponseHelper.error('Chats not found');
     return ResponseHelper.success(result);
   }
+  @Get('chat-messages/:chatType/:userId/:targetId')
+  getChatMessages(
+    @Param('chatType') chatType: 'personal' | 'group',
+    @Param('userId') userId: string,
+    @Param('targetId') targetId: string,
+  ) {
+    return this.messageService.getChatMessages(chatType, userId, targetId);
+  }
 
   @Get('chat/:receiverId')
   findByChat(@Param('receiverId') receiverId: string) {

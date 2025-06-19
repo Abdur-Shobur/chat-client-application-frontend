@@ -14,7 +14,6 @@ import { cn } from '@/lib/utils';
 
 export default function Inbox() {
 	const { data } = useChatQuery(undefined);
-	console.log(data?.data);
 	return (
 		<Tabs defaultValue="all">
 			<div className="flex items-center px-4 py-2">

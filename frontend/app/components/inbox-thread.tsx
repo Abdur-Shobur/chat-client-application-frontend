@@ -5,15 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Copy, Download, ThumbsDown, ThumbsUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-
-interface Message {
-	content: string;
-	sender: string;
-	receiver: string;
-	chatType: 'personal' | 'group';
-	type: 'text';
-	createdAt: string;
-}
+import { useGetChatMessagesQuery } from '@/store/features/message';
 
 export default function InboxThread({
 	currentUserId,
@@ -24,20 +16,30 @@ export default function InboxThread({
 	receiverId: string;
 	chatType: 'personal' | 'group';
 }) {
-	const [messages, setMessages] = useState<Message[]>([]);
 	const [input, setInput] = useState('');
+
+	const {
+		data: initialMessages,
+		isSuccess,
+		refetch,
+	} = useGetChatMessagesQuery({
+		chatType,
+		userId: currentUserId,
+		targetId: receiverId,
+	});
+
+	console.log(initialMessages);
 
 	useEffect(() => {
 		socket.emit('register', currentUserId);
-
-		socket.on('receiveMessage', (msg: Message) => {
-			setMessages((prev) => [...prev, msg]);
+		socket.on('receiveMessage', (message) => {
+			// dispatch(addMessage(message));
 		});
 
 		return () => {
 			socket.off('receiveMessage');
 		};
-	}, [currentUserId]);
+	}, [currentUserId, receiverId, chatType, isSuccess]);
 
 	const handleSend = () => {
 		const payload = {
@@ -49,12 +51,13 @@ export default function InboxThread({
 		};
 		socket.emit('sendMessage', payload);
 		setInput('');
+		refetch();
 	};
 
 	return (
 		<div className="flex flex-col h-full">
 			<div className="flex-1 space-y-4 overflow-y-auto p-4">
-				{messages.map((message, index) => (
+				{initialMessages?.map((message, index) => (
 					<div
 						key={index}
 						className={cn(

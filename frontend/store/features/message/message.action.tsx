@@ -10,9 +10,9 @@ import {
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { UserType } from './message.interface';
-import { useDeleteUserMutation } from './message.api-slice';
 import { apiDelete } from '../basic-api';
 import { UpdateUser } from './message.update';
+import { useDeleteUserMutation } from '../user';
 
 export function UserAction({ user }: { user: UserType }) {
 	const [deleteUser, { isLoading }] = useDeleteUserMutation();

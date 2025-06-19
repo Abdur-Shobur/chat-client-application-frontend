@@ -72,6 +72,38 @@ export class MessageService {
     ]);
   }
 
+  async getChatMessages(
+    chatType: 'personal' | 'group',
+    userId: string,
+    targetId: string,
+  ) {
+    const matchQuery =
+      chatType === 'personal'
+        ? {
+            chatType: 'personal',
+            $or: [
+              {
+                sender: new Types.ObjectId(userId),
+                receiver: new Types.ObjectId(targetId),
+              },
+              {
+                sender: new Types.ObjectId(targetId),
+                receiver: new Types.ObjectId(userId),
+              },
+            ],
+          }
+        : {
+            chatType: 'group',
+            receiver: new Types.ObjectId(targetId),
+          };
+
+    return this.messageModel
+      .find(matchQuery)
+      .sort({ createdAt: 1 })
+      .populate('sender', 'name avatar') // optional
+      .exec();
+  }
+
   findByChat(receiverId: string) {
     return this.messageModel.find({ receiver: receiverId }).exec();
   }

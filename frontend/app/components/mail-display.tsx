@@ -1,4 +1,8 @@
 'use client';
+import React, { useEffect } from 'react';
+import socket from '@/lib/socket'; // 👈 import your socket instance
+import { useGetChatMessagesQuery } from '@/store/features/message';
+
 import { addDays } from 'date-fns/addDays';
 import { addHours } from 'date-fns/addHours';
 import { format } from 'date-fns/format';
@@ -49,6 +53,7 @@ import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import InboxThread from './inbox-thread';
+import { useParams } from 'next/navigation';
 
 interface MailDisplayProps {
 	mail: Mail | null;
@@ -60,19 +65,48 @@ interface Message {
 	timestamp: string;
 }
 export function MailDisplay({ mail }: MailDisplayProps) {
+	const params = useParams();
 	const today = new Date();
-	const [messages] = useState<Message[]>([
-		{
-			role: 'agent',
-			content: 'Hello, I am a generative AI agent. How may I assist you today?',
-			timestamp: '4:08:28 PM',
-		},
-		{
-			role: 'user',
-			content: "Hi, I'd like to check my bill.",
-			timestamp: '4:08:37 PM',
-		},
-	]);
+	const [input, setInput] = useState('');
+
+	const {
+		data: initialMessages,
+		isSuccess,
+		refetch,
+	} = useGetChatMessagesQuery({
+		chatType: 'group',
+		userId: '67b2c9fc32c98e2ba9cce8d2',
+		targetId: params.id.toString(),
+	});
+
+	console.log(initialMessages);
+
+	useEffect(() => {
+		socket.emit('register', '67b2c9fc32c98e2ba9cce8d2');
+		socket.on('receiveMessage', (message) => {
+			// dispatch(addMessage(message));
+		});
+
+		return () => {
+			socket.off('receiveMessage');
+		};
+	}, ['67b2c9fc32c98e2ba9cce8d2', params.id.toString(), isSuccess]);
+
+	const handleSend = (e) => {
+		e.preventDefault();
+		if (!input.trim()) return;
+		const payload = {
+			sender: '67b2c9fc32c98e2ba9cce8d2',
+			receiver: params.id.toString(),
+			chatType: 'group',
+			text: input,
+			type: 'text',
+		};
+		socket.emit('sendMessage', payload);
+		e.target.reset();
+		setInput('');
+		refetch();
+	};
 	return (
 		<div className="flex h-full flex-col">
 			<TooltipProvider>
@@ -240,11 +274,89 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 					<Separator />
 					<ScrollArea className="h-[calc(100vh-300px)]">
 						<div className="flex flex-col gap-2 p-4  max-w-[90%] mx-auto">
-							<InboxThread
-								chatType="group"
-								currentUserId="67b2c9fc32c98e2ba9cce8d2"
-								receiverId="68541a93248dbfda08bb9aeb"
-							/>
+							<div className="flex flex-col h-full">
+								<div className="flex-1 space-y-4 overflow-y-auto p-4">
+									{initialMessages?.map((message, index) => (
+										<div
+											key={index}
+											className={cn(
+												'flex gap-2 max-w-[80%]',
+												message.sender === '67b2c9fc32c98e2ba9cce8d2' &&
+													'ml-auto'
+											)}
+										>
+											{message.sender !== '67b2c9fc32c98e2ba9cce8d2' && (
+												<div className="h-8 w-8 rounded-full bg-primary flex-shrink-0" />
+											)}
+											<div className="space-y-2">
+												<div className="flex items-center gap-2">
+													<span className="text-sm font-medium">
+														{message.sender === '67b2c9fc32c98e2ba9cce8d2'
+															? 'You'
+															: 'Them'}
+													</span>
+													<span className="text-sm text-muted-foreground">
+														{format(new Date(message.createdAt), 'p')}
+													</span>
+												</div>
+												<div
+													className={`p-3 rounded-lg ${
+														message.sender !== '67b2c9fc32c98e2ba9cce8d2'
+															? 'bg-muted/50'
+															: 'bg-blue-100'
+													}`}
+												>
+													<p className="text-sm whitespace-pre-wrap">
+														{message.text}
+													</p>
+												</div>
+												{message.sender !== '67b2c9fc32c98e2ba9cce8d2' && (
+													<div className="flex items-center gap-2">
+														<Button
+															variant="ghost"
+															size="icon"
+															className="h-8 w-8"
+														>
+															<Copy className="h-4 w-4" />
+														</Button>
+														<Button
+															variant="ghost"
+															size="icon"
+															className="h-8 w-8"
+														>
+															<Download className="h-4 w-4" />
+														</Button>
+														<Button
+															variant="ghost"
+															size="icon"
+															className="h-8 w-8"
+														>
+															<ThumbsUp className="h-4 w-4" />
+														</Button>
+														<Button
+															variant="ghost"
+															size="icon"
+															className="h-8 w-8"
+														>
+															<ThumbsDown className="h-4 w-4" />
+														</Button>
+													</div>
+												)}
+											</div>
+										</div>
+									))}
+								</div>
+
+								{/* <div className="p-4 border-t flex gap-2">
+									<input
+										value={input}
+										onChange={(e) => setInput(e.target.value)}
+										className="flex-1 border rounded px-3 py-2"
+										placeholder="Type your message..."
+									/>
+									<Button onClick={handleSend}>Send</Button>
+								</div> */}
+							</div>
 							{/* {messages.map((message, index) => (
 								<div
 									key={index}
@@ -298,9 +410,12 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 
 					<Separator className="mt-auto" />
 					<div className="p-4">
-						<form>
+						<form onSubmit={handleSend}>
 							<div className="grid gap-4">
 								<Textarea
+									value={input}
+									onChange={(e) => setInput(e.target.value)}
+									name="message"
 									className="p-4"
 									placeholder={`Reply ${mail.name}...`}
 								/>
@@ -312,11 +427,7 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 										<Switch id="mute" aria-label="Mute thread" /> Mute this
 										thread
 									</Label>
-									<Button
-										onClick={(e) => e.preventDefault()}
-										size="sm"
-										className="ml-auto"
-									>
+									<Button type="submit" size="sm" className="ml-auto">
 										Send
 									</Button>
 								</div>
