@@ -20,10 +20,10 @@ import { ResponseHelper } from 'src/helper';
 export class MessageController {
   constructor(private readonly messageService: MessageService) {}
 
-  @Post()
-  create(@Body() dto: CreateMessageDto) {
-    return this.messageService.create(dto);
-  }
+  // @Post()
+  // create(@Body() dto: CreateMessageDto) {
+  //   return this.messageService.create(dto );
+  // }
 
   @Get()
   findAll() {
@@ -35,13 +35,25 @@ export class MessageController {
     if (!result) return ResponseHelper.error('Chats not found');
     return ResponseHelper.success(result);
   }
-  @Get('chat-messages/:chatType/:userId/:targetId')
+  @Get('chat-messages/:chatType/:targetId')
   getChatMessages(
+    @Req() req: any,
     @Param('chatType') chatType: 'personal' | 'group',
-    @Param('userId') userId: string,
     @Param('targetId') targetId: string,
   ) {
-    return this.messageService.getChatMessages(chatType, userId, targetId);
+    if (req?.user?.role === 'admin') {
+      return this.messageService.getChatMessagesForAdmin(
+        chatType,
+        req.user._id,
+        targetId,
+      );
+    } else {
+      return this.messageService.getChatMessages(
+        chatType,
+        req.user._id,
+        targetId,
+      );
+    }
   }
 
   @Get('chat/:receiverId')

@@ -14,5 +14,6 @@ export interface IMessage {
   type: MessageType;
   status: MessageStatus;
   createdAt?: Date;
+  visibility?: 'public' | 'private';
   updatedAt?: Date;
 }

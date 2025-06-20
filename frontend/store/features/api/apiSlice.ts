@@ -22,6 +22,6 @@ export const apiSlice = createApi({
 	endpoints: () => ({}),
 	refetchOnReconnect: true,
 	refetchOnFocus: true,
-	tagTypes: ['Users', 'Tasks'],
+	tagTypes: ['Users', 'Tasks', 'Groups'],
 	keepUnusedDataFor: 50000,
 });

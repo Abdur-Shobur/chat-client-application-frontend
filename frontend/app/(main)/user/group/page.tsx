@@ -1,4 +1,5 @@
 import { Separator } from '@/components/ui/separator';
+import { GroupView } from '@/store/features/group';
 
 export default function Page() {
 	return (
@@ -7,6 +8,9 @@ export default function Page() {
 				<h1 className="text-xl font-bold">Group</h1>
 			</div>
 			<Separator />
+			<div className="p-2">
+				<GroupView />
+			</div>
 		</>
 	);
 }

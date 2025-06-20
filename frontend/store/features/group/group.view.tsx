@@ -11,7 +11,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Copy, MoreVertical } from 'lucide-react';
-import { useGroupsQuery } from './group.api-slice';
+import { useGroupMyQuery, useGroupsQuery } from './group.api-slice';
 import { toast } from '@/hooks/use-toast';
 import {
 	DropdownMenu,
@@ -21,9 +21,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import { env } from '@/lib';
+import { useSession } from 'next-auth/react';
 
 export function GroupView() {
-	const { data, isLoading } = useGroupsQuery(undefined);
+	const { data, isLoading } = useGroupMyQuery(undefined);
+	const { data: session } = useSession();
+	const isAdmin = session?.user?.role === 'admin';
 
 	const handleCopy = (link: string) => {
 		navigator.clipboard.writeText(link);
@@ -36,16 +40,16 @@ export function GroupView() {
 	return (
 		<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
 			{data.data.map((group: any) => {
-				const joinLink = `${
-					process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-				}/join/${group._id}`;
+				const joinLink = `${env.next_auth_url}?type=group&join=${group._id}`;
 
 				return (
 					<Card key={group._id} className="relative w-full">
 						<CardHeader className="pb-2 space-y-2">
 							<div className="flex items-start justify-between">
 								<Link
-									href={`/admin/inbox/${group._id}`}
+									href={`${isAdmin ? '/admin' : '/user'}/inbox/${
+										group._id
+									}?type=group`}
 									className="no-underline"
 								>
 									<div>

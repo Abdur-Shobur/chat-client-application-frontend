@@ -17,10 +17,10 @@ export const api = apiSlice.injectEndpoints({
 		}),
 		getChatMessages: builder.query<
 			Message[],
-			{ chatType: string; userId: string; targetId: string }
+			{ chatType: string; targetId: string }
 		>({
-			query: ({ chatType, userId, targetId }) =>
-				`/messages/chat-messages/${chatType}/${userId}/${targetId}`,
+			query: ({ chatType, targetId }) =>
+				`/messages/chat-messages/${chatType}/${targetId}`,
 		}),
 	}),
 });

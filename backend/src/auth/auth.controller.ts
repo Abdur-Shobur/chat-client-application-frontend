@@ -81,9 +81,18 @@ export class AuthController {
     // Remove password from the response
     delete data.password;
     data.role = IRoleType.User;
-    console.log({ data });
     return ResponseHelper.success(
-      { user: data, accessToken },
+      {
+        user: {
+          email: data.email,
+          name: data.name,
+          phone: data.phone,
+          status: data.status,
+          role: IRoleType.User,
+          id: data._id,
+        },
+        accessToken,
+      },
       'User Register successfully',
     );
   }
@@ -139,7 +148,6 @@ export class AuthController {
       ? await this.userService.findByEmail(email)
       : await this.userService.findByPhone(email);
 
-    console.log(isEmail);
     if (!user) {
       throw new HttpException(
         ResponseHelper.error(
@@ -172,8 +180,6 @@ export class AuthController {
 
     const role = await this.roleService.findOne(user.role);
 
-    console.log({ role });
-
     // Create the JWT payload
     const payload = { username: user.name, _id: user._id, role: role.type };
     const accessToken = this.jwtService.sign(payload);
@@ -185,7 +191,14 @@ export class AuthController {
 
     return ResponseHelper.success(
       {
-        user: { email: _email, name, phone, status, role: role.type },
+        user: {
+          email: _email,
+          name,
+          phone,
+          status,
+          role: role.type,
+          id: user._id,
+        },
         accessToken,
       },
       'Login successful',

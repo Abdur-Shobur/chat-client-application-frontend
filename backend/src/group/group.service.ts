@@ -53,6 +53,33 @@ export class GroupService {
     return updated;
   }
 
+  // group.service.ts
+  async joinGroup(groupId: string, userId: string) {
+    const group = await this.groupModel.findById(groupId);
+    if (!group) throw new NotFoundException('Group not found');
+
+    // Ensure not already a member or pending
+    if (group.members?.includes(userId)) {
+      throw new NotFoundException('You are already a member of this group.');
+    }
+    if (group.pendingMembers?.includes(userId)) {
+      throw new NotFoundException('Your request to join is already pending.');
+    }
+
+    // Auto approve or wait for admin approval
+    if (group.joinApprovalType === 'auto') {
+      group.members.push(userId);
+      await group.save();
+      return { message: 'Successfully joined the group.' };
+    } else if (group.joinApprovalType === 'admin') {
+      group.pendingMembers.push(userId);
+      await group.save();
+      return { message: 'Join request submitted. Waiting for admin approval.' };
+    }
+
+    throw new NotFoundException('Invalid group configuration.');
+  }
+
   async updateMembers(id: string, members: string[]) {
     const group = await this.groupModel.findByIdAndUpdate(
       id,
@@ -71,6 +98,14 @@ export class GroupService {
       { status },
       { new: true, useFindAndModify: false },
     );
+  }
+
+  //  Get groups where the user is a member
+  async getMyJoinedGroups(userId: string) {
+    return this.groupModel
+      .find({ members: userId })
+      .populate('tags') // optional
+      .select('-pendingMembers'); // optionally hide
   }
 
   async remove(id: string) {

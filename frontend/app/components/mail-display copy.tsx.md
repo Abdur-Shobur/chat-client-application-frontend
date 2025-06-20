@@ -1,3 +1,4 @@
+```ts
 'use client';
 import React, { useEffect } from 'react';
 import { useGetChatMessagesQuery } from '@/store/features/message';
@@ -52,10 +53,8 @@ import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { connectSocket, getSocket } from '@/lib/socketClient';
+import { socket } from '@/lib/socketClient';
 import { Input } from '@/components/ui/input';
-import { env } from '@/lib';
-import { Socket } from 'socket.io-client';
 
 interface MailDisplayProps {
 	mail: Mail | null;
@@ -74,6 +73,7 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 	const { data: session } = useSession();
 	const searchParams = useSearchParams();
 	const messagesEndRef = React.useRef<HTMLDivElement>(null);
+	console.log(session);
 	const { data: initialMessages, isSuccess } = useGetChatMessagesQuery({
 		chatType: searchParams.get('type') || 'personal',
 		targetId: params.id.toString(),
@@ -94,39 +94,23 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 	}, [isSuccess, initialMessages]);
 
 	useEffect(() => {
-		let socketRef: Socket | null = null;
+		if (!session?.user?.id) return;
 
-		const setupSocket = async () => {
-			try {
-				const socket = await connectSocket();
-				socketRef = socket;
+		const userId = session.user.id;
 
-				socket.emit('register', session.user.id);
+		socket.emit('register', userId);
 
-				const handleReceiveMessage = (message: any) => {
-					setMessages((prev) => [...prev, message]);
-				};
-
-				socket.on('receiveMessage', handleReceiveMessage);
-
-				return () => {
-					console.log('Cleaning up socket listeners');
-					socket?.off('receiveMessage', handleReceiveMessage);
-				};
-			} catch (err) {
-				console.error('Socket setup failed:', err);
-			}
+		const handleReceiveMessage = (message) => {
+			console.log({ message });
+			setMessages((prevMessages) => [...prevMessages, message]); // ✅ append new message
 		};
 
-		if (session?.user?.id) {
-			setupSocket();
-		}
+		socket.on('receiveMessage', handleReceiveMessage);
 
 		return () => {
-			// Optional: disconnect on unmount (not needed if app-wide socket)
-			socketRef?.disconnect();
+			socket.off('receiveMessage', handleReceiveMessage);
 		};
-	}, []);
+	}, [session?.user?.id]);
 
 	if (!session || !session.user) {
 		return (
@@ -135,60 +119,37 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 			</div>
 		);
 	}
-	const handleSend = async (e: React.FormEvent<HTMLFormElement>) => {
+	const handleSend = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
+		if (!input.trim()) return;
 
-		if (!input.trim() || !session?.user?.id) return;
-
-		let socket = getSocket();
-
-		// ❗ If socket is not connected, try reconnecting
-		if (!socket || !socket.connected) {
-			console.warn('Socket not connected. Attempting to reconnect...');
-
-			try {
-				// Attempt to reconnect
-				socket = await connectSocket();
-			} catch (err) {
-				console.error('❌ Could not reconnect socket:', err);
-				return;
-			}
-		}
-
-		if (!socket || !socket.connected) {
-			console.error('❌ Socket still not connected after retry');
-			return;
-		}
-
-		// Build message
 		const newMessage = {
-			sender: session.user.id,
+			sender: session?.user.id,
 			receiver: params.id.toString(),
-			chatType: searchParams.get('type') || 'personal',
+			chatType: searchParams.get('type') || 'personal', // Use 'personal' as default
 			text: input,
 			type: 'text',
-			visibility: session.user.role === 'admin' ? 'public' : 'private',
-			createdAt: new Date().toISOString(),
+			visibility: session?.user.role === 'admin' ? 'public' : 'private',
+			createdAt: new Date().toISOString(), // Add timestamp if your message structure includes it
+			// You can also include a temp ID or status like 'pending' if needed
 		};
 
-		// 1. Emit message to server
 		socket.emit('sendMessage', newMessage);
 
-		// 2. Optimistically update the UI
+		// ✅ Optimistically update UI
 		const messageUpdate = {
 			...newMessage,
 			sender: {
 				_id: session.user.id,
-				name: 'You', // Optionally replace with session.user.name
+				name: 'You',
 			},
 		};
-
 		setMessages((prevMessages) => [...prevMessages, messageUpdate]);
 
-		// 3. Reset input field
-		e.target.reset();
+		e.currentTarget.reset();
 		setInput('');
 	};
+
 	return (
 		<div className="flex h-full flex-col">
 			<TooltipProvider>
@@ -532,3 +493,4 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 		</div>
 	);
 }
+```

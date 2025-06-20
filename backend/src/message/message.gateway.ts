@@ -10,21 +10,49 @@ import {
 import { Server, Socket } from 'socket.io';
 import { MessageService } from './message.service';
 import { CreateMessageDto } from './dto/create-message.dto';
+import { UserService } from 'src/user/user.service';
+import { GroupService } from 'src/group/group.service';
+import { JwtService } from '@nestjs/jwt';
+import { AuthWsMiddleware } from 'src/helper/ws-auth.middleware';
+import { CustomConfigService } from 'src/config';
 
-@WebSocketGateway({ cors: true }) // Enable CORS for local dev
+@WebSocketGateway({
+  cors: {
+    origin: '*',
+  },
+  transports: ['websocket'],
+})
 export class MessageGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
   private connectedUsers = new Map<string, string>(); // socket.id -> userId
 
-  constructor(private readonly messageService: MessageService) {}
+  constructor(
+    private readonly messageService: MessageService,
+    private readonly userService: UserService,
+    private readonly groupService: GroupService,
+    private readonly jwtService: JwtService,
+    private readonly configService: CustomConfigService,
+  ) {}
 
   afterInit(server: Server) {
     console.log('WebSocket Server Initialized');
+
+    // Attach auth middleware
+    server.use(
+      AuthWsMiddleware(this.jwtService, this.configService, this.userService),
+    );
   }
 
   handleConnection(socket: Socket) {
-    console.log(`Client connected: ${socket.id}`);
+    const user = socket.data.user;
+    if (user) {
+      this.connectedUsers.set(socket.id, user._id.toString());
+      console.log(`Client connected: ${socket.id} (userId: ${user._id})`);
+    } else {
+      console.warn(`Unauthorized socket tried to connect: ${socket.id}`);
+      socket.disconnect();
+    }
   }
 
   handleDisconnect(socket: Socket) {
@@ -33,22 +61,22 @@ export class MessageGateway
     this.connectedUsers.delete(socket.id);
   }
 
-  @SubscribeMessage('register')
-  handleRegister(
-    @MessageBody() userId: string,
-    @ConnectedSocket() client: Socket,
-  ) {
-    this.connectedUsers.set(client.id, userId);
-    console.log(`User ${userId} registered with socket ${client.id}`);
-  }
-
   @SubscribeMessage('sendMessage')
   async handleSendMessage(
     @MessageBody() data: CreateMessageDto,
     @ConnectedSocket() client: Socket,
   ) {
-    // 1. Save message in DB
-    const savedMessage = await this.messageService.create(data);
+    const senderUser = client.data.user;
+    console.log({ senderUser });
+    if (!senderUser) {
+      client.emit('unauthorized');
+      return;
+    }
+
+    const savedMessage = await this.messageService.create({
+      ...data,
+      sender: senderUser._id,
+    });
 
     // 2. Emit message to receiver(s)
     if (data.chatType === 'personal') {
@@ -63,7 +91,32 @@ export class MessageGateway
       client.broadcast.emit('receiveMessage', savedMessage);
     }
 
-    // 3. Optionally send back to sender for UI update
+    // if (data.chatType === 'personal') {
+    //   for (const [socketId, userId] of this.connectedUsers.entries()) {
+    //     if (userId === data.receiver) {
+    //       client.to(socketId).emit('receiveMessage', savedMessage);
+    //     }
+    //   }
+    // } else if (data.chatType === 'group') {
+    //   const group = await this.groupService.findOne(data.receiver);
+    //   if (savedMessage.visibility === 'public') {
+    //     for (const [socketId, userId] of this.connectedUsers.entries()) {
+    //       if (
+    //         group.members.includes(userId) &&
+    //         userId !== senderUser._id.toString()
+    //       ) {
+    //         client.to(socketId).emit('receiveMessage', savedMessage);
+    //       }
+    //     }
+    //   } else {
+    //     for (const [socketId, userId] of this.connectedUsers.entries()) {
+    //       if (userId === group.createdBy.toString()) {
+    //         client.to(socketId).emit('receiveMessage', savedMessage);
+    //       }
+    //     }
+    //   }
+    // }
+
     client.emit('messageSent', savedMessage);
   }
 }

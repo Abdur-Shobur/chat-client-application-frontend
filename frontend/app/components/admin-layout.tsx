@@ -1,40 +1,59 @@
 'use client';
 import * as React from 'react';
-import { File, Inbox, Users2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, File, Inbox, Users2 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { Nav } from './nav';
 import { LogoutButton } from '@/lib/logout';
 import { useSession } from 'next-auth/react';
+import Link from 'next/link';
+import MobileNav from './mobile-nav';
 
 interface AdminLayoutProps {
-	defaultCollapsed?: boolean;
 	children?: React.ReactNode;
 }
 
-export function AdminLayout({
-	defaultCollapsed = false,
-	children,
-}: AdminLayoutProps) {
-	const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed);
+export function AdminLayout({ children }: AdminLayoutProps) {
+	const [isCollapsed, setIsCollapsed] = React.useState(false);
 	const { data } = useSession();
 
 	if (data?.user.role !== 'admin') {
-		return;
+		return null;
 	}
+
 	return (
-		<div className="grid grid-cols-12">
-			<div className="col-span-2 border-r h-screen overflow-y-auto">
+		<div className="flex h-screen overflow-hidden">
+			{/* Sidebar */}
+			<div
+				className={cn(
+					'hidden md:flex border-r bg-white h-full transition-all duration-300  flex-col',
+					isCollapsed ? 'w-16' : 'w-64'
+				)}
+			>
+				{/* Header with Collapse Toggle */}
 				<div
-					className={cn(
-						'flex h-[52px] items-center',
-						isCollapsed ? 'h-[52px]' : 'px-2'
-					)}
+					className={`flex items-center px-2 py-3 ${
+						isCollapsed ? 'justify-center' : 'justify-between'
+					}`}
 				>
-					<h2 className="text-lg font-semibold text-left">Message Center</h2>
+					<h2 className={cn('text-lg font-semibold', isCollapsed && 'hidden')}>
+						Message Center
+					</h2>
+					<button
+						onClick={() => setIsCollapsed(!isCollapsed)}
+						className="p-1 rounded hover:bg-gray-100"
+					>
+						{isCollapsed ? (
+							<ChevronRight size={20} />
+						) : (
+							<ChevronLeft size={20} />
+						)}
+					</button>
 				</div>
+
 				<Separator />
+
 				<Nav
 					isCollapsed={isCollapsed}
 					links={[
@@ -61,7 +80,9 @@ export function AdminLayout({
 						},
 					]}
 				/>
+
 				<Separator />
+
 				<Nav
 					isCollapsed={isCollapsed}
 					links={[
@@ -74,10 +95,15 @@ export function AdminLayout({
 						},
 					]}
 				/>
-				<LogoutButton />
+
+				<LogoutButton isCollapsed={isCollapsed} />
+
 				<Separator />
 			</div>
-			<div className="col-span-10">{children}</div>
+			<MobileNav />
+
+			{/* Main Content */}
+			<div className="flex-1 overflow-y-auto">{children}</div>
 		</div>
 	);
 }

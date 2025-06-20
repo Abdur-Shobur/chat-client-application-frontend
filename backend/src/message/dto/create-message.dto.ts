@@ -44,4 +44,12 @@ export class CreateMessageDto {
   })
   @IsEnum(['text', 'image', 'file', 'video', 'audio'])
   type: MessageType;
+
+  @ApiProperty({
+    default: 'private',
+    description: 'Visibility of the message',
+    enum: ['public', 'private'],
+  })
+  @IsOptional()
+  visibility?: 'public' | 'private';
 }

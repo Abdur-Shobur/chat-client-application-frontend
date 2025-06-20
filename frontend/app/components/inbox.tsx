@@ -1,19 +1,34 @@
 'use client';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import React from 'react';
-import { MailList } from './mail-list';
-import { mails } from '../data';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import React, { useEffect } from 'react';
 import { useChatQuery } from '@/store/features/message';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { useSession } from 'next-auth/react';
+import { useParams } from 'next/navigation';
+// import { socket } from '@/lib/socketClient';
 
 export default function Inbox() {
 	const { data } = useChatQuery(undefined);
+	const { data: session } = useSession();
+	const isAdmin = session?.user.role === 'admin';
+	const params = useParams();
+
+	// useEffect(() => {
+	// 	socket.on('receiveMessage', (message) => {
+	// 		console.log('New message:', message);
+	// 		// Optionally trigger state update or refetch
+	// 	});
+
+	// 	return () => {
+	// 		socket.off('receiveMessage');
+	// 	};
+	// }, []);
+
 	return (
 		<Tabs defaultValue="all">
 			<div className="flex items-center px-4 py-2">
@@ -47,10 +62,14 @@ export default function Inbox() {
 
 						return (
 							<Link
-								href={`/admin/inbox/${id}`}
+								href={`/${isAdmin ? 'admin' : 'user'}/inbox/${id}?type=${
+									isGroup ? 'group' : 'personal'
+								}`}
 								key={id}
 								className={cn(
-									'flex flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm transition-all hover:bg-accent'
+									`flex flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm transition-all hover:bg-accent ${
+										params.id === id && 'bg-muted'
+									}`
 								)}
 							>
 								<div className="flex w-full flex-col gap-1">

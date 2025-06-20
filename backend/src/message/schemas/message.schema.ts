@@ -26,6 +26,11 @@ export const MessageSchema = new Schema(
       enum: ['sent', 'delivered', 'read'],
       default: 'sent',
     },
+    visibility: {
+      type: String,
+      enum: ['public', 'private'],
+      default: 'private',
+    },
   },
   { timestamps: true },
 );

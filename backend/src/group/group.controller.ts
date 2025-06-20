@@ -17,6 +17,7 @@ import { ResponseHelper } from 'src/helper';
 import { AuthGuard } from 'src/helper/auth-guard';
 import { Role, Roles } from 'src/role/decorator';
 import { UpdateStatusDto } from './dto/update-status.dto'; // Optional, if group has status
+import { JoinGroupDto } from './dto/join-group.dto';
 
 @UseGuards(AuthGuard)
 @Controller('group')
@@ -29,11 +30,16 @@ export class GroupController {
   @Post()
   // @Roles(Role.GROUP_CREATE)
   async create(@Req() req: any, @Body() createGroupDto: CreateGroupDto) {
-    console.log(req.user);
     const data = {
       ...createGroupDto,
       createdBy: req.user._id,
     };
+
+    // Ensure creator is added as a member
+    if (!data.members.includes(req.user._id)) {
+      data.members.push(req.user._id);
+    }
+
     const result = await this.groupService.create(data);
     if (!result) return ResponseHelper.error('Group not created');
     return ResponseHelper.success(result, 'Group created successfully');
@@ -50,6 +56,31 @@ export class GroupController {
     return ResponseHelper.success(result);
   }
 
+  /**
+   *  My Groups
+   *  Retrieves groups that the user is a member of
+   */
+  @Get('my-groups')
+  async myGroups(@Req() req: any) {
+    const userId = req.user._id;
+    const result = await this.groupService.getMyJoinedGroups(userId);
+    if (!result) return ResponseHelper.error('Groups not found');
+    return ResponseHelper.success(result);
+  }
+
+  /**
+   *  Join a Group
+   */
+
+  @Post('join')
+  async joinGroup(@Body() dto: JoinGroupDto, @Req() req: any) {
+    const userId = req.user._id;
+    const result = await this.groupService.joinGroup(dto.groupId, userId);
+    if (!result) {
+      return ResponseHelper.error('Failed to join group');
+    }
+    return ResponseHelper.success(result);
+  }
   /**
    * Get a single Group by ID
    */

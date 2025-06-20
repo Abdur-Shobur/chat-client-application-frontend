@@ -5,6 +5,7 @@ type UserType = {
 	name: string;
 	phone: string;
 	status: string;
+	id: string;
 	role: 'admin' | 'user';
 };
 declare module 'next-auth' {

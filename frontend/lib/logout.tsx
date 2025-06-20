@@ -1,8 +1,9 @@
+import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
-export const LogoutButton = () => {
+export const LogoutButton = ({ isCollapsed }: { isCollapsed: boolean }) => {
 	const router = useRouter();
 
 	const handleLogout = () => {
@@ -12,15 +13,16 @@ export const LogoutButton = () => {
 	};
 
 	return (
-		<div className="ms-5 mb-2">
-			<button
-				type="button"
+		<div className="ms-2">
+			<Button
 				onClick={handleLogout}
-				className="dark:bg-muted text-xs dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white flex gap-4"
+				size="sm"
+				variant="link"
+				className="no-underline"
 			>
 				<LogOut className="h-4 w-4" />
-				<span>Log out</span>
-			</button>
+				{!isCollapsed && <span>Log out</span>}
+			</Button>
 		</div>
 	);
 };

@@ -24,7 +24,7 @@ import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
 import { useLoginMutation, useRegistrationMutation } from './auth.api-slice';
 import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 const RegFormSchema = z
 	.object({
@@ -68,6 +68,8 @@ const FormSchema = z.object({
 
 export function AuthTab() {
 	const router = useRouter();
+	const searchParams = useSearchParams();
+	const redirectTo = searchParams.get('redirectTo') || '/';
 
 	// Login
 	const [login, { isLoading: loginLoading, isError: isLoginError }] =
@@ -87,7 +89,7 @@ export function AuthTab() {
 			});
 
 			if (result?.ok) {
-				router.push('/');
+				router.replace(redirectTo);
 				form.reset();
 				toast({ title: 'Login successful!' });
 			}
@@ -137,7 +139,7 @@ export function AuthTab() {
 			});
 
 			if (result?.ok) {
-				router.push('/');
+				router.replace(redirectTo);
 				regForm.reset();
 				toast({ title: 'Registration successful!' });
 			}
