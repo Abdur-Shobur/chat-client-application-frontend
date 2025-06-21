@@ -54,12 +54,18 @@ import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { connectSocket, getSocket } from '@/lib/socketClient';
 import { Input } from '@/components/ui/input';
+import { env } from '@/lib';
 import { Socket } from 'socket.io-client';
 
 interface MailDisplayProps {
 	mail: Mail | null;
 }
 
+interface Message {
+	role: 'agent' | 'user';
+	content: string;
+	timestamp: string;
+}
 export function MailDisplay({ mail }: MailDisplayProps) {
 	const router = useRouter();
 	const params = useParams();
@@ -75,7 +81,6 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 
 	// ✅ Local state to hold messages
 	const [messages, setMessages] = useState([]);
-	console.log(messages);
 	useEffect(() => {
 		if (messagesEndRef.current) {
 			messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -99,35 +104,29 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 				socket.emit('register', session.user.id);
 
 				const handleReceiveMessage = (message: any) => {
-					console.log('call effect for socket setup', message);
-					return setMessages((prev) => [...prev, message]);
+					setMessages((prev) => [...prev, message]);
 				};
 
 				socket.on('receiveMessage', handleReceiveMessage);
 
-				// Move this cleanup into the outer scope so useEffect can return it
 				return () => {
 					console.log('Cleaning up socket listeners');
-					socket.off('receiveMessage', handleReceiveMessage);
-					socket.disconnect();
+					socket?.off('receiveMessage', handleReceiveMessage);
 				};
 			} catch (err) {
 				console.error('Socket setup failed:', err);
 			}
 		};
 
-		let cleanupFn: () => void;
-
 		if (session?.user?.id) {
-			setupSocket().then((cleanup) => {
-				cleanupFn = cleanup!;
-			});
+			setupSocket();
 		}
 
 		return () => {
-			if (cleanupFn) cleanupFn();
+			// Optional: disconnect on unmount (not needed if app-wide socket)
+			socketRef?.disconnect();
 		};
-	}, [session?.user?.id]);
+	}, []);
 
 	if (!session || !session.user) {
 		return (

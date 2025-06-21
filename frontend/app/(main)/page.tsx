@@ -1,7 +1,4 @@
 import * as React from 'react';
-import Inbox from '../components/inbox';
-import { MailDisplay } from '../components/mail-display';
-import { mails } from '../data';
 
 export default function Page() {
 	return (

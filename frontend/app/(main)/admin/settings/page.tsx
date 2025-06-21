@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { Separator } from '@/components/ui/separator';
-import { GroupCreate, GroupView } from '@/store/features/group';
 
 export default function Page() {
 	return (

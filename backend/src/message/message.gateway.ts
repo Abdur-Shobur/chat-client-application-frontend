@@ -67,7 +67,6 @@ export class MessageGateway
     @ConnectedSocket() client: Socket,
   ) {
     const senderUser = client.data.user;
-    console.log({ senderUser });
     if (!senderUser) {
       client.emit('unauthorized');
       return;
@@ -87,6 +86,7 @@ export class MessageGateway
         }
       }
     } else if (data.chatType === 'group') {
+      console.log({ savedMessage });
       // Broadcast to everyone except sender
       client.broadcast.emit('receiveMessage', savedMessage);
     }

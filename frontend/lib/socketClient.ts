@@ -1,9 +1,16 @@
 // socketClient.ts
 // import { io } from 'socket.io-client';
 // export const socket = io(env.baseRoute, {
-// 	// Replace with your server's URL in production
-// 	transports: ['websocket'], // Use WebSocket as the transport method
+//  	transports: ['websocket'],
 // 	autoConnect: true,
+// 	auth: async () => {
+// 		const session = await getSession();
+// 		if (!session?.accessToken) {
+// 			console.warn('No access token in session');
+// 			return {};
+// 		}
+// 		return { token: session.accessToken };
+// 	},
 // });
 import { io, Socket } from 'socket.io-client';
 import { getSession } from 'next-auth/react';

@@ -1,8 +1,6 @@
 import * as React from 'react';
 import { Separator } from '@/components/ui/separator';
-import { GroupCreate, GroupView } from '@/store/features/group';
 import UserList from '@/store/features/user/user.list';
-import { CreateUser } from '@/store/features/user';
 
 export default function Page() {
 	return (

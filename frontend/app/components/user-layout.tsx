@@ -7,7 +7,6 @@ import { Separator } from '@/components/ui/separator';
 import { Nav } from './nav';
 import { LogoutButton } from '@/lib/logout';
 import { useSession } from 'next-auth/react';
-import Link from 'next/link';
 import MobileNav from './mobile-nav';
 
 interface UserLayoutProps {
