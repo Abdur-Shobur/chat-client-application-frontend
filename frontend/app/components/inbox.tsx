@@ -78,14 +78,16 @@ export default function Inbox() {
 											<div className="font-semibold">{name}</div>
 											{/* You can show unread dot here if needed */}
 										</div>
-										<div className="ml-auto text-xs text-muted-foreground">
-											{formatDistanceToNow(
-												new Date(item.lastMessage.createdAt),
-												{
-													addSuffix: true,
-												}
-											)}
-										</div>
+										{item?.lastMessage?.createdAt && (
+											<div className="ml-auto text-xs text-muted-foreground">
+												{formatDistanceToNow(
+													new Date(item.lastMessage.createdAt),
+													{
+														addSuffix: true,
+													}
+												)}
+											</div>
+										)}
 									</div>
 									<div className="text-xs font-medium">
 										{item.lastMessage?.text}

@@ -1,6 +1,6 @@
 'use client';
 import React, { useEffect } from 'react';
-import { useGetChatMessagesQuery } from '@/store/features/message';
+import { Message, useGetChatMessagesQuery } from '@/store/features/message';
 
 import { addDays } from 'date-fns/addDays';
 import { addHours } from 'date-fns/addHours';
@@ -74,7 +74,9 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 	});
 
 	// ✅ Local state to hold messages
-	const [messages, setMessages] = useState([]);
+	// Import the Message type if not already imported
+	// import type { Message } from '@/store/features/message'; // adjust path as needed
+	const [messages, setMessages] = useState<Message[]>([]);
 	console.log(messages);
 	useEffect(() => {
 		if (messagesEndRef.current) {
@@ -95,6 +97,10 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 			try {
 				const socket = await connectSocket();
 				socketRef = socket;
+				if (!socket || !session) {
+					console.error('❌ Socket connection failed');
+					return;
+				}
 
 				socket.emit('register', session.user.id);
 
@@ -165,7 +171,10 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 		const newMessage = {
 			sender: session.user.id,
 			receiver: params.id.toString(),
-			chatType: searchParams.get('type') || 'personal',
+			chatType:
+				searchParams.get('type') === 'personal'
+					? 'personal'
+					: ('group' as 'group' | 'personal'),
 			text: input,
 			type: 'text',
 			visibility: session.user.role === 'admin' ? 'public' : 'private',
@@ -176,18 +185,19 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 		socket.emit('sendMessage', newMessage);
 
 		// 2. Optimistically update the UI
-		const messageUpdate = {
+		const messageUpdate: Message = {
 			...newMessage,
+			type: 'text' as 'text',
 			sender: {
 				_id: session.user.id,
-				name: 'You', // Optionally replace with session.user.name
+				name: 'You',
 			},
 		};
 
 		setMessages((prevMessages) => [...prevMessages, messageUpdate]);
 
 		// 3. Reset input field
-		e.target.reset();
+		(e.target as HTMLFormElement).reset();
 		setInput('');
 	};
 	return (

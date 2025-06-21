@@ -1,17 +1,32 @@
 import { apiSlice } from '../api/apiSlice';
 import { ApiResponse } from '../basic-api';
-import { UserType } from './message.interface';
 export interface Message {
-	content: string;
-	sender: string;
+	sender: {
+		_id: string;
+		name: string;
+	};
+	text: string;
 	receiver: string;
 	chatType: 'personal' | 'group';
 	type: 'text';
 	createdAt: string;
+	groupInfo?: {
+		_id: string;
+		name: string;
+	};
+	userInfo?: {
+		_id: string;
+		name: string;
+	};
+	lastMessage?: {
+		text: string;
+		createdAt: string;
+		_id: string;
+	};
 }
 export const api = apiSlice.injectEndpoints({
 	endpoints: (builder) => ({
-		chat: builder.query<ApiResponse<UserType[]>, undefined>({
+		chat: builder.query<ApiResponse<Message[]>, undefined>({
 			query: (): string => `messages/chat`,
 			providesTags: ['Users'],
 		}),

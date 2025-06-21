@@ -1,25 +1,34 @@
 import { apiSlice } from '../api/apiSlice';
 import { ApiResponse } from '../basic-api';
-import { UserType } from '../user';
+export interface GroupType {
+	_id?: string;
+	name: string;
+	joinType: 'public' | 'private';
+	status: 'active' | 'inactive';
+	joinApprovalType: 'auto' | 'manual';
+	description?: string | undefined;
+	welcomeMessage?: string | undefined;
+	members?: string[] | undefined;
+}
 
 export const api = apiSlice.injectEndpoints({
 	endpoints: (builder) => ({
-		groups: builder.query<ApiResponse<UserType[]>, undefined>({
+		groups: builder.query<ApiResponse<GroupType[]>, undefined>({
 			query: (): string => `group`,
 			providesTags: ['Groups'],
 		}),
 
-		groupById: builder.query<ApiResponse<UserType[]>, { id: string }>({
+		groupById: builder.query<ApiResponse<GroupType>, { id: string }>({
 			query: ({ id }): string => `group/${id}`,
 			providesTags: ['Groups'],
 		}),
 
-		groupMy: builder.query<ApiResponse<UserType[]>, undefined>({
+		groupMy: builder.query<ApiResponse<GroupType[]>, undefined>({
 			query: (): string => `/group/my-groups`,
 			providesTags: ['Groups'],
 		}),
 
-		groupCreate: builder.mutation<any, { email: string; password: string }>({
+		groupCreate: builder.mutation<any, GroupType>({
 			query: (payload) => ({
 				url: `group`,
 				method: 'POST',

@@ -1,12 +1,7 @@
+import { UserType } from '@/types';
 import NextAuth, { User as NextAuthUser } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 
-type UserType = {
-	email: string;
-	name: string;
-	phone: string;
-	status: string;
-};
 // Define the extended user type
 interface CustomUser extends NextAuthUser {
 	accessToken?: string;

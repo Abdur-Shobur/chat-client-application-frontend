@@ -71,7 +71,7 @@ export function CreateUser() {
 
 	const onSubmit = async (data: FormValues) => {
 		try {
-			await createUser(data).unwrap();
+			await createUser(data as any).unwrap();
 			toast({
 				title: 'Success',
 				description: 'User created successfully',

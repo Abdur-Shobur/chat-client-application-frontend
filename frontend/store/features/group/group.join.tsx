@@ -56,8 +56,7 @@ export default function GroupJoin() {
 			} else {
 				setJoined(true);
 			}
-		} catch (err) {
-			console.error(err);
+		} catch (err: any) {
 			toast({
 				variant: 'destructive',
 				title: 'Error',

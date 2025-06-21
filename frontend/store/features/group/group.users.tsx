@@ -2,7 +2,13 @@
 import React from 'react';
 import { useUsersQuery } from '../user';
 
-export default function GroupUsers({ selectedMembers, toggleMember }) {
+export default function GroupUsers({
+	selectedMembers,
+	toggleMember,
+}: {
+	selectedMembers: string[];
+	toggleMember: (id: string) => void;
+}) {
 	const { data, isLoading } = useUsersQuery(undefined);
 	if (isLoading) {
 		return <div>Loading...</div>;

@@ -1,6 +1,5 @@
 'use client';
 import React from 'react';
-import { useUsersQuery } from './message.api-slice';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
 	DropdownMenu,
@@ -12,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { MoreVertical } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import { useUsersQuery } from '../user';
 
 export default function UserList() {
 	const { data, isLoading } = useUsersQuery(undefined);

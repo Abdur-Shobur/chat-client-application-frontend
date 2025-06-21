@@ -1,3 +1,4 @@
+```ts
 'use client';
 import React, { useEffect, useState } from 'react';
 import socket from '@/lib/socket'; // 👈 import your socket instance
@@ -119,3 +120,4 @@ export default function InboxThread({
 		</div>
 	);
 }
+```

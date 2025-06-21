@@ -132,7 +132,7 @@ export function AuthTab() {
 
 	async function regOnSubmit(data: z.infer<typeof RegFormSchema>) {
 		try {
-			const response = await registration(data).unwrap();
+			const response = await registration(data as any).unwrap();
 			const result = await signIn('credentials', {
 				token: JSON.stringify(response),
 				redirect: false,
@@ -143,7 +143,7 @@ export function AuthTab() {
 				regForm.reset();
 				toast({ title: 'Registration successful!' });
 			}
-		} catch (error) {
+		} catch (error: any) {
 			if (
 				error?.status === 409 &&
 				error?.data?.errors &&
