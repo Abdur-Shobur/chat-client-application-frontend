@@ -1,8 +1,8 @@
 'use client';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import React, { useEffect } from 'react';
+import { Tabs } from '@/components/ui/tabs';
+import React, { useState } from 'react';
 import { useChatQuery } from '@/store/features/message';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Link from 'next/link';
@@ -17,6 +17,7 @@ export default function Inbox() {
 	const { data: session } = useSession();
 	const isAdmin = session?.user.role === 'admin';
 	const params = useParams();
+	const [search, setSearch] = useState('');
 
 	// useEffect(() => {
 	// 	socket.on('receiveMessage', (message) => {
@@ -28,12 +29,20 @@ export default function Inbox() {
 	// 		socket.off('receiveMessage');
 	// 	};
 	// }, []);
+	const filteredMessages = data?.data?.filter((item) => {
+		const isGroup = item.chatType === 'group';
+		const name = isGroup
+			? item.groupInfo?.name || ''
+			: item.userInfo?.name || '';
+
+		return name.toLowerCase().includes(search.toLowerCase());
+	});
 
 	return (
 		<Tabs defaultValue="all">
 			<div className="flex items-center px-4 py-2">
 				<h1 className="text-xl font-bold">Inbox</h1>
-				<TabsList className="ml-auto">
+				{/* <TabsList className="ml-auto">
 					<TabsTrigger value="all" className="text-zinc-600 dark:text-zinc-200">
 						All Message
 					</TabsTrigger>
@@ -43,17 +52,22 @@ export default function Inbox() {
 					>
 						Unread
 					</TabsTrigger>
-				</TabsList>
+				</TabsList> */}
 			</div>
 			<Separator />
 			<div className="bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
 				<div className="relative">
-					<Input placeholder="Search" className="pl-8" />
+					<Input
+						placeholder="Search"
+						className="pl-8"
+						value={search}
+						onChange={(e) => setSearch(e.target.value)}
+					/>
 				</div>
 			</div>
 			<ScrollArea className="h-[85vh]">
 				<div className="flex flex-col gap-2 p-4 pt-0">
-					{data?.data?.map((item) => {
+					{filteredMessages?.map((item) => {
 						const isGroup = item.chatType === 'group';
 						const name = isGroup
 							? item.groupInfo?.name || 'Unknown Group'
