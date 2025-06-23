@@ -44,7 +44,7 @@ const MobileNav = () => {
 			label: 'Inbox',
 		},
 		{
-			href: '/user/profile',
+			href: '/user/group',
 			icon: <Users className="h-6 w-6" />,
 			label: 'Profile',
 		},
