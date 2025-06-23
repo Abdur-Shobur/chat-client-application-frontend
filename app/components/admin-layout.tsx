@@ -61,7 +61,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 							title: 'Inbox',
 							label: '128',
 							icon: Inbox,
-							variant: 'default',
+							variant: 'ghost',
 							href: '/admin/inbox',
 						},
 						{
@@ -83,7 +83,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
 				<Separator />
 
-				<Nav
+				{/* <Nav
 					isCollapsed={isCollapsed}
 					links={[
 						{
@@ -94,7 +94,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 							href: '/admin/settings',
 						},
 					]}
-				/>
+				/> */}
 
 				<LogoutButton isCollapsed={isCollapsed} />
 

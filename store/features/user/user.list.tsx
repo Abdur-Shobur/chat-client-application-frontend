@@ -12,10 +12,12 @@ import { Button } from '@/components/ui/button';
 import { MoreVertical } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import UserStatusChange from './user.status-change';
+import { useRouter } from 'next/navigation';
 
 export default function UserList() {
 	const { data, isLoading } = useUsersQuery(undefined);
-
+	const router = useRouter();
 	if (isLoading) return <div>Loading...</div>;
 	if (!data?.data) return <div>No users found.</div>;
 
@@ -37,20 +39,19 @@ export default function UserList() {
 								</Button>
 							</DropdownMenuTrigger>
 							<DropdownMenuContent align="end">
-								<DropdownMenuItem onClick={() => console.log('Edit', user._id)}>
-									Edit
+								{/* Edit Modal inside dropdown */}
+								<DropdownMenuItem className="p-0">
+									<DropdownMenuItem
+										onClick={() => {
+											router.push(`/admin/members/${user._id}`);
+										}}
+									>
+										Edit User
+									</DropdownMenuItem>
 								</DropdownMenuItem>
-								<DropdownMenuItem
-									onClick={() => console.log('Change Status', user._id)}
-								>
-									Change Status
-								</DropdownMenuItem>
-								<DropdownMenuItem
-									onClick={() => console.log('Delete', user._id)}
-									className="text-red-500"
-								>
-									Delete
-								</DropdownMenuItem>
+
+								<UserStatusChange user={user} />
+								{/* <UserDelete user={user} /> */}
 							</DropdownMenuContent>
 						</DropdownMenu>
 					</CardHeader>

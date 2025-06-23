@@ -23,12 +23,13 @@ import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { env } from '@/lib';
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 export function GroupView() {
 	const { data, isLoading } = useGroupMyQuery(undefined);
 	const { data: session } = useSession();
 	const isAdmin = session?.user?.role === 'admin';
-
+	const router = useRouter();
 	const handleCopy = (link: string) => {
 		navigator.clipboard.writeText(link);
 		toast({ title: 'Copied', description: 'Group join link copied' });
@@ -61,31 +62,37 @@ export function GroupView() {
 										)}
 									</div>
 								</Link>
-								<DropdownMenu>
-									<DropdownMenuTrigger asChild>
-										<Button variant="ghost" size="icon" className="w-8 h-8">
-											<MoreVertical className="h-4 w-4" />
-										</Button>
-									</DropdownMenuTrigger>
-									<DropdownMenuContent align="end">
-										<DropdownMenuItem
-											onClick={() => console.log('Edit', group._id)}
-										>
-											📝 Edit
-										</DropdownMenuItem>
-										<DropdownMenuItem
-											onClick={() => console.log('View Members', group._id)}
-										>
-											👥 View Members
-										</DropdownMenuItem>
-										<DropdownMenuItem
-											onClick={() => console.log('Delete', group._id)}
-											className="text-red-500"
-										>
-											❌ Delete
-										</DropdownMenuItem>
-									</DropdownMenuContent>
-								</DropdownMenu>
+								{isAdmin && (
+									<DropdownMenu>
+										<DropdownMenuTrigger asChild>
+											<Button variant="ghost" size="icon" className="w-8 h-8">
+												<MoreVertical className="h-4 w-4" />
+											</Button>
+										</DropdownMenuTrigger>
+										<DropdownMenuContent align="end">
+											<DropdownMenuItem
+												onClick={() => {
+													router.push(`/admin/group/${group._id}`);
+												}}
+											>
+												📝 Edit
+											</DropdownMenuItem>
+											<DropdownMenuItem
+												onClick={() => {
+													router.push(`/admin/group/${group._id}/members`);
+												}}
+											>
+												👥 View Members
+											</DropdownMenuItem>
+											{/*<DropdownMenuItem
+												onClick={() => console.log('Delete', group._id)}
+												className="text-red-500"
+											>
+												❌ Delete
+											</DropdownMenuItem> */}
+										</DropdownMenuContent>
+									</DropdownMenu>
+								)}
 							</div>
 							<div className="flex gap-2">
 								<Input readOnly value={joinLink} className="text-sm" />

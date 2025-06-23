@@ -69,7 +69,7 @@ export function UserLayout({
 							title: 'Inbox',
 							label: '128',
 							icon: Inbox,
-							variant: 'default',
+							variant: 'ghost',
 							href: '/user/inbox',
 						},
 						{
@@ -84,7 +84,7 @@ export function UserLayout({
 
 				<Separator />
 
-				<Nav
+				{/* <Nav
 					isCollapsed={isCollapsed}
 					links={[
 						{
@@ -95,7 +95,7 @@ export function UserLayout({
 							href: '/user/settings',
 						},
 					]}
-				/>
+				/> */}
 
 				<LogoutButton isCollapsed={isCollapsed} />
 

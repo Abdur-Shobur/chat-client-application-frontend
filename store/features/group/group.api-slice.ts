@@ -9,6 +9,7 @@ export interface GroupType {
 	description?: string | undefined;
 	welcomeMessage?: string | undefined;
 	members?: string[] | undefined;
+	createdAt?: any;
 }
 
 export const api = apiSlice.injectEndpoints({
@@ -23,6 +24,11 @@ export const api = apiSlice.injectEndpoints({
 			providesTags: ['Groups'],
 		}),
 
+		getMemberDetails: builder.query<ApiResponse<GroupType>, { id: string }>({
+			query: ({ id }): string => `group/members/${id}`,
+			providesTags: ['Groups'],
+		}),
+
 		groupMy: builder.query<ApiResponse<GroupType[]>, undefined>({
 			query: (): string => `/group/my-groups`,
 			providesTags: ['Groups'],
@@ -34,15 +40,34 @@ export const api = apiSlice.injectEndpoints({
 				method: 'POST',
 				body: payload,
 			}),
-			invalidatesTags: [],
+			invalidatesTags: ['Groups'],
 		}),
-		groupJoin: builder.mutation<any, { groupId: string }>({
+
+		groupUpdate: builder.mutation<any, any>({
+			query: (payload) => ({
+				url: `group/${payload.id}`,
+				method: 'PATCH',
+				body: payload,
+			}),
+			invalidatesTags: ['Groups'],
+		}),
+
+		memberRemove: builder.mutation<any, { groupId: string; userId: string }>({
+			query: (payload) => ({
+				url: `group/remove-member/${payload.groupId}`,
+				method: 'PATCH',
+				body: payload,
+			}),
+			invalidatesTags: ['Groups'],
+		}),
+
+		groupJoin: builder.mutation<ApiResponse<any>, { groupId: string }>({
 			query: (payload) => ({
 				url: `group/join`,
 				method: 'POST',
 				body: payload,
 			}),
-			invalidatesTags: [],
+			invalidatesTags: ['Groups'],
 		}),
 	}),
 });
@@ -52,5 +77,8 @@ export const {
 	useGroupMyQuery,
 	useGroupByIdQuery,
 	useGroupJoinMutation,
+	useMemberRemoveMutation,
 	useGroupCreateMutation,
+	useGroupUpdateMutation,
+	useGetMemberDetailsQuery,
 } = api;

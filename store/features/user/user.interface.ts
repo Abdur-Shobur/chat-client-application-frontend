@@ -3,6 +3,7 @@ export type AuthType = {
 	name: string;
 	email: string;
 	username: string;
+	phone: string;
 	password: string;
 	accessToken?: string;
 	refreshToken?: string;
@@ -14,6 +15,7 @@ export type UserType = typeof data;
 const data = {
 	_id: '6749af8f96f1653316a6a656',
 	name: 'admin',
+	status: 'active',
 	email: 'admin@gmail.com',
 	createdAt: '2024-11-29T12:11:59.203Z',
 	updatedAt: '2024-11-29T12:11:59.203Z',

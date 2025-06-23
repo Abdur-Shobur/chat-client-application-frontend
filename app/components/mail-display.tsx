@@ -380,11 +380,11 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 								</div>
 							</div>
 						</div>
-						{mail.date && (
+						{/* {mail.date && (
 							<div className="ml-auto text-xs text-muted-foreground">
 								{format(new Date(mail.date), 'PPpp')}
 							</div>
-						)}
+						)} */}
 					</div>
 					<Separator />
 					<ScrollArea className="h-[calc(100vh-150px)] md:h-[calc(100vh-300px)]">

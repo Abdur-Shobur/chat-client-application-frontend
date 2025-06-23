@@ -45,16 +45,14 @@ export default function GroupJoin() {
 
 	const handleJoin = async () => {
 		try {
-			const res = await joinGroup({ groupId: groupId! }).unwrap();
-
-			if (res.message === 'Successfully joined the group.') {
-				router.push(`${isAdmin ? '/admin' : '/user'}/inbox/${groupId}`);
+			const { data } = await joinGroup({ groupId: groupId! }).unwrap();
+			console.log(data);
+			if (data.message === 'Successfully joined the group.') {
 				toast({
 					title: 'Success',
 					description: 'Joined group successfully',
 				});
-			} else {
-				setJoined(true);
+				handleClose();
 			}
 		} catch (err: any) {
 			toast({

@@ -12,7 +12,7 @@ import {
 import { UserType } from './user.interface';
 import { useDeleteUserMutation } from './user.api-slice';
 import { apiDelete } from '../basic-api';
-import { UpdateUser } from './user.update';
+import { EditUser } from './user.update';
 
 export function UserAction({ user }: { user: UserType }) {
 	const [deleteUser, { isLoading }] = useDeleteUserMutation();
@@ -51,7 +51,7 @@ export function UserAction({ user }: { user: UserType }) {
 			</DropdownMenu>
 
 			{/* Separate UpdateUser dialog */}
-			<UpdateUser user={user} open={openDialog} setOpen={setOpenDialog} />
+			{/* <EditUser user={user} open={openDialog} setOpen={setOpenDialog} /> */}
 		</>
 	);
 }

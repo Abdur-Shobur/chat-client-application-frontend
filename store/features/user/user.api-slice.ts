@@ -9,30 +9,47 @@ export const api = apiSlice.injectEndpoints({
 			providesTags: ['Users'],
 		}),
 
+		user: builder.query<ApiResponse<UserType>, { id: string }>({
+			query: ({ id }) => `user/${id}`,
+			providesTags: ['Users'],
+		}),
+
 		storeUser: builder.mutation<
 			UserType,
 			{ username: string; password: string }
 		>({
 			query: (payload) => ({
-				url: `users`,
+				url: `user`,
 				method: 'POST',
 				body: payload,
 			}),
 			invalidatesTags: ['Users'],
 		}),
 
-		updateUser: builder.mutation<UserType, { id: string }>({
+		updateUser: builder.mutation<ApiResponse<UserType>, any>({
 			query: (payload) => ({
-				url: `users/${payload.id}`,
+				url: `user/update/${payload.id}`,
 				method: 'PUT',
 				body: payload,
 			}),
 			invalidatesTags: ['Users'],
 		}),
 
-		deleteUser: builder.mutation<UserType, string>({
+		statusUser: builder.mutation<
+			ApiResponse<UserType>,
+			{ id: string; status: string }
+		>({
+			query: (payload) => ({
+				url: `user/status/${payload.id}`,
+				method: 'PATCH',
+				body: payload,
+			}),
+			invalidatesTags: ['Users'],
+		}),
+
+		deleteUser: builder.mutation<ApiResponse<UserType>, string>({
 			query: (id) => ({
-				url: `users/${id}`,
+				url: `user/delete/${id}`,
 				method: 'DELETE',
 			}),
 			invalidatesTags: ['Users'],
@@ -42,6 +59,8 @@ export const api = apiSlice.injectEndpoints({
 
 export const {
 	useUsersQuery,
+	useUserQuery,
+	useStatusUserMutation,
 	useStoreUserMutation,
 	useDeleteUserMutation,
 	useUpdateUserMutation,
