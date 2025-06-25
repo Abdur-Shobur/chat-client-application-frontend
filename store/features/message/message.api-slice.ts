@@ -3,17 +3,19 @@ import { apiSlice } from '../api/apiSlice';
 import { ApiResponse } from '../basic-api';
 import { GroupType } from '../group/group.api-slice';
 
-export interface Message {
-	sender: {
+interface SenderType {
+	_id: string;
+	name: string;
+	role?: {
 		_id: string;
 		name: string;
-		role?: {
-			_id: string;
-			name: string;
-			type: string;
-		};
+		type: string;
 	};
-
+}
+export interface Message {
+	sender: SenderType;
+	replyTo?: Message;
+	replyToUser?: SenderType;
 	text: string;
 	receiver: string;
 	chatType: 'personal' | 'group';

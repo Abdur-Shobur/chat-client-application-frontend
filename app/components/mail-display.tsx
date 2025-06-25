@@ -16,11 +16,16 @@ import {
 	ArchiveX,
 	ChevronLeft,
 	Clock,
+	Copy,
+	Download,
 	Forward,
 	MoreVertical,
 	Reply,
 	ReplyAll,
+	ThumbsDown,
+	ThumbsUp,
 	Trash2,
+	X,
 } from 'lucide-react';
 
 import {
@@ -58,6 +63,8 @@ import { Input } from '@/components/ui/input';
 import { Socket } from 'socket.io-client';
 import UpdateVisibility from '@/store/features/message/message.update-visibility';
 import Link from 'next/link';
+import { GroupInfo } from '@/store/features/group/group-info-modal';
+import { UserType } from '@/types';
 
 interface MailDisplayProps {
 	mail: Mail | null;
@@ -66,10 +73,12 @@ interface MailDisplayProps {
 export function MailDisplay({ mail }: MailDisplayProps) {
 	const router = useRouter();
 	const params = useParams();
+	const [personalMessage, setPersonalMessage] = useState<Message | null>(null);
 	const today = new Date();
 	const [input, setInput] = useState('');
 	const { data: session } = useSession();
 	const searchParams = useSearchParams();
+	const type = searchParams.get('type') || 'personal';
 	const messagesEndRef = React.useRef<HTMLDivElement>(null);
 	const { data: initialMessages, isSuccess } = useGetChatMessagesQuery({
 		chatType: searchParams.get('type') || 'personal',
@@ -80,11 +89,11 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 		id: params.id.toString(),
 		type: searchParams.get('type') || 'personal',
 	});
+
 	// ✅ Local state to hold messages
 	// Import the Message type if not already imported
 	// import type { Message } from '@/store/features/message'; // adjust path as needed
 	const [messages, setMessages] = useState<Message[]>([]);
-	console.log(messages);
 	useEffect(() => {
 		if (messagesEndRef.current) {
 			messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -98,8 +107,6 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 	}, [isSuccess, initialMessages]);
 
 	useEffect(() => {
-		let socketRef: Socket | null = null;
-
 		const setupSocket = async () => {
 			try {
 				const socket = await connectSocket();
@@ -111,7 +118,9 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 				socket.emit('register', session.user.id);
 
 				const handleReceiveMessage = (message: any) => {
-					console.log('call effect for socket setup', message);
+					if (message?.receiver !== params.id) {
+						return;
+					}
 					return setMessages((prev) => [...prev, message]);
 				};
 
@@ -119,7 +128,6 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 
 				// Move this cleanup into the outer scope so useEffect can return it
 				return () => {
-					console.log('Cleaning up socket listeners');
 					socket.off('receiveMessage', handleReceiveMessage);
 					socket.disconnect();
 				};
@@ -148,6 +156,8 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 			</div>
 		);
 	}
+
+	console.log(messages);
 	const handleSend = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 
@@ -155,12 +165,10 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 
 		let socket = getSocket();
 
-		// ❗ If socket is not connected, try reconnecting
 		if (!socket || !socket.connected) {
 			console.warn('Socket not connected. Attempting to reconnect...');
 
 			try {
-				// Attempt to reconnect
 				socket = await connectSocket();
 			} catch (err) {
 				console.error('❌ Could not reconnect socket:', err);
@@ -173,7 +181,7 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 			return;
 		}
 
-		// Build message
+		// Build message with reply info if available
 		const newMessage = {
 			sender: session.user.id,
 			receiver: params.id.toString(),
@@ -185,16 +193,25 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 			type: 'text',
 			visibility: session.user.role === 'admin' ? 'public' : 'private',
 			createdAt: new Date().toISOString(),
+
+			// Add replyTo and replyToUser if replying
+			...(personalMessage
+				? {
+						replyTo: personalMessage._id,
+						replyToUser: personalMessage.sender._id,
+				  }
+				: {}),
 		};
 
-		// 1. Emit message to server
 		socket.emit('sendMessage', newMessage);
 
-		// 2. Optimistically update the UI
+		// Optimistically update UI including reply info
 		const messageUpdate: Message = {
 			...newMessage,
 			_id: new Date().toISOString(),
 			visibility: 'private',
+			replyToUser: personalMessage?.sender,
+			replyTo: personalMessage ?? undefined,
 			type: 'text' as 'text',
 			sender: {
 				_id: session.user.id,
@@ -204,11 +221,15 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 
 		setMessages((prevMessages) => [...prevMessages, messageUpdate]);
 
-		// 3. Reset input field
+		// Clear reply state after sending
+		setPersonalMessage(null);
+
+		// Reset input and refetch
 		(e.target as HTMLFormElement).reset();
 		setInput('');
 		refetchMessages();
 	};
+
 	return (
 		<div className="flex h-full flex-col">
 			<TooltipProvider>
@@ -349,9 +370,9 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 			<Separator />
 			{mail ? (
 				<div className="flex flex-1 flex-col">
-					<div className="flex items-start p-4 gap-2">
+					<div className="flex items-start px-4 py-3 gap-2">
 						<Button
-							className="md:hidden"
+							className="lg:hidden"
 							variant="outline"
 							size="icon"
 							onClick={() => router.back()}
@@ -359,15 +380,23 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 							<ChevronLeft size={20} />
 						</Button>
 						<div className="flex items-center gap-4 text-sm">
-							<Avatar>
-								<AvatarImage alt={userOrGroupInfo?.data.name} />
-								<AvatarFallback>
-									{userOrGroupInfo?.data.name
-										.split(' ')
-										.map((chunk) => chunk[0])
-										.join('')}
-								</AvatarFallback>
-							</Avatar>
+							{type === 'group' ? (
+								<GroupInfo
+									userOrGroupInfo={userOrGroupInfo}
+									groupId={userOrGroupInfo?.data._id}
+								/>
+							) : (
+								<Avatar>
+									<AvatarImage alt={userOrGroupInfo?.data.name} />
+									<AvatarFallback>
+										{userOrGroupInfo?.data.name
+											.split(' ')
+											.map((chunk) => chunk[0])
+											.join('')}
+									</AvatarFallback>
+								</Avatar>
+							)}
+
 							<div className="font-semibold">{userOrGroupInfo?.data.name}</div>
 							<div className=" gap-1 hidden">
 								<div className="font-semibold">
@@ -397,13 +426,13 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 												// If current user is admin, allow messaging anyone
 												(session?.user.role === 'admin' ? (
 													<Link
-														href={`/admin/inbox/${message?.sender?._id}?type=personal`}
+														href={`/${message?.sender?._id}?type=personal`}
 														className="h-8 w-8 rounded-full bg-primary flex-shrink-0"
 													/>
 												) : // If current user is NOT admin, only allow messaging an admin
 												message.sender?.role?.type === 'admin' ? (
 													<Link
-														href={`/user/inbox/${message?.sender?._id}?type=personal`}
+														href={`/${message?.sender?._id}?type=personal`}
 														className="h-8 w-8 rounded-full bg-primary flex-shrink-0"
 													/>
 												) : (
@@ -413,7 +442,7 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 
 											<div
 												className={cn(
-													'space-y-2 ',
+													message.replyTo ? 'space-y-0 ' : 'space-y-2 ',
 													message.sender?._id === session?.user.id && 'ml-auto'
 												)}
 											>
@@ -426,16 +455,15 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 													<span className="text-sm text-muted-foreground">
 														{format(new Date(message.createdAt), 'p')}
 													</span>
-													{session?.user.role === 'admin' &&
-														message.sender?._id !== session?.user.id && (
-															<div className="flex items-center gap-2">
-																<UpdateVisibility
-																	id={message._id}
-																	visibility={message.visibility || 'private'}
-																/>
-															</div>
-														)}
 												</div>
+												{message.replyTo && (
+													<div className="p-1 rounded-lg rounded-br-none bg-muted text-xs whitespace-pre-wrap opacity-65 ">
+														<p className="font-semibold">
+															{message.replyTo.sender?.name}
+														</p>
+														<p className="text-xs">{message.replyTo.text}</p>
+													</div>
+												)}
 												<div
 													className={`p-2 sm:p-3 rounded-lg rounded-br-none ${
 														message.sender?._id !== session?.user.id
@@ -447,40 +475,37 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 														{message.text}
 													</p>
 												</div>
+
+												{session?.user.role === 'admin' &&
+													message.sender?._id !== session?.user.id && (
+														<div className="flex items-center gap-2">
+															<Button
+																variant="ghost"
+																size="icon"
+																className="h-8 w-8"
+															>
+																<Copy className="h-4 w-4" />
+															</Button>
+															<Button
+																type="button"
+																onClick={() => setPersonalMessage(message)}
+																variant="ghost"
+																size="icon"
+																className="h-8 w-8"
+															>
+																<Reply className="h-4 w-4" />
+															</Button>
+
+															<UpdateVisibility
+																id={message._id}
+																visibility={message.visibility || 'private'}
+															/>
+														</div>
+													)}
 											</div>
 										</div>
 									))}
 								</div>
-
-								{/* <Button
-															variant="ghost"
-															size="icon"
-															className="h-8 w-8"
-														>
-															<Copy className="h-4 w-4" />
-														</Button>
-														<Button
-															variant="ghost"
-															size="icon"
-															className="h-8 w-8"
-														>
-															<Download className="h-4 w-4" />
-														</Button>
-														<Button
-															variant="ghost"
-															size="icon"
-															className="h-8 w-8"
-														>
-															<ThumbsUp className="h-4 w-4" />
-														</Button> 
-														<Button
-															variant="ghost"
-															size="icon"
-															className="h-8 w-8"
-														>
-															<ThumbsDown className="h-4 w-4" />
-														</Button>
-														*/}
 
 								{/* <div className="p-4 border-t flex gap-2">
 									<input
@@ -547,7 +572,21 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 					<Separator className="mt-auto" />
 					<div className="p-4">
 						<form onSubmit={handleSend}>
-							<div className="flex md:grid gap-4">
+							<div className="flex md:grid gap-4 relative">
+								{personalMessage && (
+									<div className="absolute -top-11 left-0 w-full h-auto bg-gray-200 p-1 rounded-md text-xs">
+										<p className="font-semibold">
+											{personalMessage.sender.name}
+										</p>
+										<p>{personalMessage.text}</p>
+										<button
+											className="absolute top-1 right-1"
+											onClick={() => setPersonalMessage(null)}
+										>
+											<X className="h-4 w-4" />
+										</button>
+									</div>
+								)}
 								<Input
 									value={input}
 									onChange={(e) => setInput(e.target.value)}

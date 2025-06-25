@@ -1,8 +1,8 @@
 'use client';
 import React from 'react';
 import { useMemberRemoveMutation } from './group.api-slice';
-import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
 
 export default function MemberRemove({
 	groupId,
@@ -32,15 +32,10 @@ export default function MemberRemove({
 	};
 
 	return (
-		<div>
-			<Button
-				variant={'destructive'}
-				size="sm"
-				onClick={handleRemove}
-				disabled={isLoading}
-			>
+		<div className="mt-3">
+			<Badge variant={'destructive'} onClick={handleRemove}>
 				{isLoading ? 'Removing...' : 'Remove'}
-			</Button>
+			</Badge>
 		</div>
 	);
 }

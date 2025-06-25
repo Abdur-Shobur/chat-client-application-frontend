@@ -48,7 +48,7 @@ export function GroupView() {
 						<CardHeader className="pb-2 space-y-2">
 							<div className="flex items-start justify-between">
 								<Link
-									href={`${isAdmin ? '/admin' : '/user'}/inbox/${
+									href={`${isAdmin ? '/admin' : '/user'}/${
 										group._id
 									}?type=group`}
 									className="no-underline"

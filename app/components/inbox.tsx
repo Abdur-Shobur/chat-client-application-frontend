@@ -2,7 +2,7 @@
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Tabs } from '@/components/ui/tabs';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useChatQuery } from '@/store/features/message';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Link from 'next/link';
@@ -10,25 +10,58 @@ import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
 import { cn } from '@/lib/utils';
 import { useSession } from 'next-auth/react';
 import { useParams } from 'next/navigation';
+import { GroupCreate } from '@/store/features/group';
+import { Badge } from '@/components/ui/badge';
+import { connectSocket } from '@/lib/socketClient';
 // import { socket } from '@/lib/socketClient';
 
 export default function Inbox() {
-	const { data } = useChatQuery(undefined);
+	const { data, refetch, isLoading } = useChatQuery(undefined);
 	const { data: session } = useSession();
 	const isAdmin = session?.user.role === 'admin';
 	const params = useParams();
 	const [search, setSearch] = useState('');
 
-	// useEffect(() => {
-	// 	socket.on('receiveMessage', (message) => {
-	// 		console.log('New message:', message);
-	// 		// Optionally trigger state update or refetch
-	// 	});
+	useEffect(() => {
+		const setupSocket = async () => {
+			try {
+				const socket = await connectSocket();
+				if (!socket || !session) {
+					console.error('❌ Socket connection failed');
+					return;
+				}
 
-	// 	return () => {
-	// 		socket.off('receiveMessage');
-	// 	};
-	// }, []);
+				socket.emit('register', session.user.id);
+
+				const handleReceiveMessage = (message: any) => {
+					refetch();
+				};
+
+				socket.on('receiveMessage', handleReceiveMessage);
+
+				// Move this cleanup into the outer scope so useEffect can return it
+				return () => {
+					socket.off('receiveMessage', handleReceiveMessage);
+					socket.disconnect();
+				};
+			} catch (err) {
+				console.error('Socket setup failed:', err);
+			}
+		};
+
+		let cleanupFn: () => void;
+
+		if (session?.user?.id) {
+			setupSocket().then((cleanup) => {
+				cleanupFn = cleanup!;
+			});
+		}
+
+		return () => {
+			if (cleanupFn) cleanupFn();
+		};
+	}, [session?.user?.id]);
+
 	const filteredMessages = data?.data?.filter((item) => {
 		const isGroup = item.chatType === 'group';
 		const name = isGroup
@@ -40,19 +73,18 @@ export default function Inbox() {
 
 	return (
 		<Tabs defaultValue="all">
-			<div className="flex items-center px-4 py-2">
-				<h1 className="text-xl font-bold">Inbox</h1>
-				{/* <TabsList className="ml-auto">
-					<TabsTrigger value="all" className="text-zinc-600 dark:text-zinc-200">
-						All Message
-					</TabsTrigger>
-					<TabsTrigger
-						value="unread"
-						className="text-zinc-600 dark:text-zinc-200"
-					>
-						Unread
-					</TabsTrigger>
-				</TabsList> */}
+			<div className="flex items-center justify-between gap-5 px-5 py-4">
+				<div className="flex items-center gap-2">
+					<Link href="/" className="text-xl font-bold">
+						Inbox
+					</Link>
+					{isAdmin && <GroupCreate />}
+				</div>
+				{isAdmin ? (
+					<Badge variant="outline">Admin</Badge>
+				) : (
+					<Badge variant="secondary">User</Badge>
+				)}
 			</div>
 			<Separator />
 			<div className="bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -76,9 +108,7 @@ export default function Inbox() {
 
 						return (
 							<Link
-								href={`/${isAdmin ? 'admin' : 'user'}/inbox/${id}?type=${
-									isGroup ? 'group' : 'personal'
-								}`}
+								href={`/${id}?type=${isGroup ? 'group' : 'personal'}`}
 								key={id}
 								className={cn(
 									`flex flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm transition-all hover:bg-accent ${
@@ -112,12 +142,6 @@ export default function Inbox() {
 					})}
 				</div>
 			</ScrollArea>
-			{/* <TabsContent value="all" className="m-0">
-				<MailList items={mails} />
-			</TabsContent> */}
-			{/* <TabsContent value="unread" className="m-0">
-				<MailList items={mails.filter((item) => !item.read)} />
-			</TabsContent> */}
 		</Tabs>
 	);
 }

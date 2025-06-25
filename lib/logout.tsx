@@ -1,9 +1,10 @@
+'use client';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
-export const LogoutButton = ({ isCollapsed }: { isCollapsed: boolean }) => {
+export const LogoutButton = () => {
 	const router = useRouter();
 
 	const handleLogout = () => {
@@ -17,11 +18,11 @@ export const LogoutButton = ({ isCollapsed }: { isCollapsed: boolean }) => {
 			<Button
 				onClick={handleLogout}
 				size="sm"
-				variant="link"
+				variant="destructive"
 				className="no-underline"
 			>
 				<LogOut className="h-4 w-4" />
-				{!isCollapsed && <span>Log out</span>}
+				Log out
 			</Button>
 		</div>
 	);

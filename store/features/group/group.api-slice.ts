@@ -40,7 +40,7 @@ export const api = apiSlice.injectEndpoints({
 				method: 'POST',
 				body: payload,
 			}),
-			invalidatesTags: ['Groups'],
+			invalidatesTags: ['Groups', 'Messages'],
 		}),
 
 		groupUpdate: builder.mutation<any, any>({

@@ -11,7 +11,7 @@ const MobileNav = () => {
 	const { data } = useSession();
 
 	// Hide mobile nav on detail pages
-	if (pathname.includes('/inbox/')) {
+	if (pathname.includes('/')) {
 		return null;
 	}
 

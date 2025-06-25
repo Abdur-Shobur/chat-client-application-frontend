@@ -40,7 +40,7 @@ export default function GroupJoin() {
 	// Redirect to home if modal closes
 	const handleClose = () => {
 		setOpen(false);
-		router.push('/');
+		router.push(`/`);
 	};
 
 	const handleJoin = async () => {
@@ -52,7 +52,8 @@ export default function GroupJoin() {
 					title: 'Success',
 					description: 'Joined group successfully',
 				});
-				handleClose();
+				setOpen(false);
+				router.push(`/` + groupId + '?type=group');
 			}
 		} catch (err: any) {
 			toast({

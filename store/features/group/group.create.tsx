@@ -36,6 +36,7 @@ import {
 import { SquarePen } from 'lucide-react';
 import { useGroupCreateMutation } from './group.api-slice';
 import GroupUsers from './group.users';
+import { toast } from '@/hooks/use-toast';
 
 // fake users for member select simulation
 const mockUsers = [{ id: '67b2c9fc32c98e2ba9cce8d2', name: 'John Doe' }];
@@ -56,6 +57,7 @@ export function GroupCreate() {
 	const [createGroup, { isLoading }] = useGroupCreateMutation();
 	const [step, setStep] = useState<1 | 2>(1); // Step 1: Group Info, Step 2: Select Members
 	const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
+	const [open, setOpen] = useState(false);
 
 	const form = useForm<GroupSchema>({
 		resolver: zodResolver(groupSchema),
@@ -72,12 +74,34 @@ export function GroupCreate() {
 
 	const onSubmit = async (values: GroupSchema) => {
 		try {
-			await createGroup({ ...values, members: selectedMembers }).unwrap();
+			const response = await createGroup({
+				...values,
+				members: selectedMembers,
+			}).unwrap();
+
+			toast({
+				title: 'Successfully!',
+				description: `Group created successfully`,
+			});
 			form.reset();
-			setSelectedMembers([]);
-			setStep(1);
-		} catch (err) {
-			console.error('Failed to create group', err);
+			setOpen(false);
+		} catch (err: any) {
+			toast({
+				title: 'Error',
+				description: `Failed to create group`,
+				variant: 'destructive',
+			});
+
+			// Assuming the error has the structure:
+			// [{ field: "name", message: "The value \"asdfasdf\" already exists." }]
+			if (err?.data?.errors && Array.isArray(err.data.errors)) {
+				err.data.errors.forEach((e: { field: string; message: string }) => {
+					form.setError(e.field as keyof GroupSchema, {
+						type: 'manual',
+						message: e.message,
+					});
+				});
+			}
 		}
 	};
 
@@ -88,168 +112,62 @@ export function GroupCreate() {
 	};
 
 	return (
-		<Dialog onOpenChange={() => setStep(1)}>
+		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
-				<Button variant="outline" size="sm">
-					<SquarePen className="mr-2 h-4 w-4" />
-					<span className="hidden lg:inline">Create Group</span>
+				<Button variant="outline" className="px-2" size="sm" type="button">
+					<SquarePen className="h-4 w-4" />
 				</Button>
 			</DialogTrigger>
 
-			<DialogContent className="sm:max-w-[1000px]">
+			<DialogContent className="sm:max-w-[500px]">
 				<DialogHeader>
-					<DialogTitle className="text-center">
-						{step === 1 ? 'Create Group' : 'Select Members'}
-					</DialogTitle>
+					<DialogTitle className="text-center">Create Group</DialogTitle>
 				</DialogHeader>
 
-				{step === 1 ? (
-					<Form {...form}>
-						<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-							<FormField
-								control={form.control}
-								name="name"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>Group Name</FormLabel>
+				<Form {...form}>
+					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+						<FormField
+							control={form.control}
+							name="name"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Group Name</FormLabel>
+									<FormControl>
+										<Input placeholder="Group Name" {...field} />
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+
+						<FormField
+							control={form.control}
+							name="status"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Status</FormLabel>
+									<Select onValueChange={field.onChange} value={field.value}>
 										<FormControl>
-											<Input placeholder="Group Name" {...field} />
+											<SelectTrigger>
+												<SelectValue placeholder="Select status" />
+											</SelectTrigger>
 										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-							<FormField
-								control={form.control}
-								name="description"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>Description</FormLabel>
-										<FormControl>
-											<Textarea placeholder="Short description..." {...field} />
-										</FormControl>
-									</FormItem>
-								)}
-							/>
+										<SelectContent>
+											<SelectItem value="active">Active</SelectItem>
+											<SelectItem value="inactive">Inactive</SelectItem>
+										</SelectContent>
+									</Select>
+								</FormItem>
+							)}
+						/>
 
-							<div className="grid grid-cols-2 gap-4">
-								<FormField
-									control={form.control}
-									name="joinType"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>Join Type</FormLabel>
-											<Select
-												onValueChange={field.onChange}
-												value={field.value}
-											>
-												<FormControl>
-													<SelectTrigger>
-														<SelectValue placeholder="Select" />
-													</SelectTrigger>
-												</FormControl>
-												<SelectContent>
-													<SelectItem value="public">Public</SelectItem>
-													<SelectItem value="private">Private</SelectItem>
-												</SelectContent>
-											</Select>
-										</FormItem>
-									)}
-								/>
-								<FormField
-									control={form.control}
-									name="joinApprovalType"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>Approval Type</FormLabel>
-											<Select
-												onValueChange={field.onChange}
-												value={field.value}
-											>
-												<FormControl>
-													<SelectTrigger>
-														<SelectValue placeholder="Select" />
-													</SelectTrigger>
-												</FormControl>
-												<SelectContent>
-													<SelectItem value="auto">Auto</SelectItem>
-													<SelectItem value="manual">Manual</SelectItem>
-												</SelectContent>
-											</Select>
-										</FormItem>
-									)}
-								/>
-							</div>
-
-							<FormField
-								control={form.control}
-								name="welcomeMessage"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>Welcome Message</FormLabel>
-										<FormControl>
-											<Textarea
-												placeholder="Welcome to the group!"
-												{...field}
-											/>
-										</FormControl>
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="status"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>Status</FormLabel>
-										<Select onValueChange={field.onChange} value={field.value}>
-											<FormControl>
-												<SelectTrigger>
-													<SelectValue placeholder="Select status" />
-												</SelectTrigger>
-											</FormControl>
-											<SelectContent>
-												<SelectItem value="active">Active</SelectItem>
-												<SelectItem value="inactive">Inactive</SelectItem>
-											</SelectContent>
-										</Select>
-									</FormItem>
-								)}
-							/>
-
-							<DialogFooter className="flex justify-between pt-4">
-								<Button
-									type="button"
-									variant="secondary"
-									onClick={() => setStep(2)}
-								>
-									Select Members ({selectedMembers.length})
-								</Button>
-								<Button type="submit" disabled={isLoading}>
-									{isLoading ? 'Creating...' : 'Create Group'}
-								</Button>
-							</DialogFooter>
-						</form>
-					</Form>
-				) : (
-					<div className="space-y-4">
-						<div className="grid gap-2 grid-cols-4">
-							<GroupUsers
-								selectedMembers={selectedMembers}
-								toggleMember={toggleMember}
-							/>
-						</div>
 						<DialogFooter className="flex justify-between pt-4">
-							<Button variant="outline" onClick={() => setStep(1)}>
-								Back to Form
-							</Button>
-							<Button variant="default" onClick={() => setStep(1)}>
-								Done ({selectedMembers.length} selected)
+							<Button type="submit" disabled={isLoading}>
+								{isLoading ? 'Creating...' : 'Create Group'}
 							</Button>
 						</DialogFooter>
-					</div>
-				)}
+					</form>
+				</Form>
 			</DialogContent>
 		</Dialog>
 	);

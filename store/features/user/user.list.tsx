@@ -26,7 +26,7 @@ export default function UserList() {
 			{data.data.map((user: any) => (
 				<Card key={user._id} className="relative">
 					<CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-						<Link href={`/admin/inbox/${user._id}?type=personal`}>
+						<Link href={`/admin/${user._id}?type=personal`}>
 							<CardTitle className="text-lg font-semibold">
 								{user.name}
 							</CardTitle>

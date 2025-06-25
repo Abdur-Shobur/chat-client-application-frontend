@@ -11,6 +11,14 @@ export const api = apiSlice.injectEndpoints({
 			}),
 			invalidatesTags: [],
 		}),
+		tempLogin: builder.mutation<AuthType, { email: string; password: string }>({
+			query: (payload) => ({
+				url: `auth/temporary-login`,
+				method: 'POST',
+				body: payload,
+			}),
+			invalidatesTags: [],
+		}),
 
 		// auth registration
 		registration: builder.mutation<
@@ -27,4 +35,8 @@ export const api = apiSlice.injectEndpoints({
 	overrideExisting: false,
 });
 
-export const { useLoginMutation, useRegistrationMutation } = api;
+export const {
+	useLoginMutation,
+	useRegistrationMutation,
+	useTempLoginMutation,
+} = api;
