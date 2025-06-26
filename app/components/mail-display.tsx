@@ -393,7 +393,7 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 							{type === 'group' && session.user.role === 'admin' ? (
 								<GroupInfo
 									userOrGroupInfo={userOrGroupInfo}
-									groupId={(userOrGroupInfo?.data as any)._id}
+									groupId={(userOrGroupInfo?.data as any)?._id}
 								/>
 							) : (
 								<Avatar>
