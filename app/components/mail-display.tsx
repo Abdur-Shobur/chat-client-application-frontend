@@ -118,7 +118,12 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 				socket.emit('register', session.user.id);
 
 				const handleReceiveMessage = (message: any) => {
-					if (message?.receiver !== params.id) {
+					console.log({ message });
+					if (
+						type === 'group'
+							? message?.receiver !== params.id
+							: message?.sender._id !== params.id
+					) {
 						return;
 					}
 					return setMessages((prev) => [...prev, message]);
@@ -191,7 +196,12 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 					: ('group' as 'group' | 'personal'),
 			text: input,
 			type: 'text',
-			visibility: session.user.role === 'admin' ? 'public' : 'private',
+			visibility:
+				session.user.role === 'admin'
+					? personalMessage
+						? 'private'
+						: 'public'
+					: 'private',
 			createdAt: new Date().toISOString(),
 
 			// Add replyTo and replyToUser if replying
@@ -380,10 +390,10 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 							<ChevronLeft size={20} />
 						</Button>
 						<div className="flex items-center gap-4 text-sm">
-							{type === 'group' ? (
+							{type === 'group' && session.user.role === 'admin' ? (
 								<GroupInfo
 									userOrGroupInfo={userOrGroupInfo}
-									groupId={userOrGroupInfo?.data._id}
+									groupId={(userOrGroupInfo?.data as any)._id}
 								/>
 							) : (
 								<Avatar>

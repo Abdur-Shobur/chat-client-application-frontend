@@ -14,7 +14,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 	return (
 		<div className="grid grid-cols-12 min-h-screen">
 			{/* Inbox column - hidden on mobile if viewing detail page */}
-			{session?.user?.role === 'admin' && (
+			{/* {session?.user?.role === 'admin' && (
 				<div
 					className={`col-span-12 lg:col-span-3 border-r ${
 						isDetailPage ? 'hidden lg:block' : ''
@@ -22,15 +22,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 				>
 					<Inbox />
 				</div>
-			)}
+			)} */}
+			<div
+				className={`col-span-12 lg:col-span-3 border-r ${
+					isDetailPage ? 'hidden lg:block' : ''
+				}`}
+			>
+				<Inbox />
+			</div>
 			<GroupJoin />
 			{/* Children (message view) - hidden on mobile if not viewing detail page */}
 			<div
-				className={`${
-					session?.user?.role === 'admin'
-						? 'col-span-12 lg:col-span-9'
-						: 'col-span-12'
-				}  ${!isDetailPage ? 'hidden lg:block' : ''}`}
+				className={`col-span-12 lg:col-span-9 ${
+					!isDetailPage ? 'hidden lg:block' : ''
+				}`}
 			>
 				{children}
 			</div>

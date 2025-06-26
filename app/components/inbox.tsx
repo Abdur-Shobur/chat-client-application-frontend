@@ -34,6 +34,7 @@ export default function Inbox() {
 				socket.emit('register', session.user.id);
 
 				const handleReceiveMessage = (message: any) => {
+					console.log({ message });
 					refetch();
 				};
 

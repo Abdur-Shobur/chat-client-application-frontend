@@ -24,7 +24,7 @@ export function GroupInfo({
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
-				<Avatar>
+				<Avatar className="cursor-pointer">
 					<AvatarImage alt={userOrGroupInfo?.data.name} />
 					<AvatarFallback>
 						{userOrGroupInfo?.data.name
