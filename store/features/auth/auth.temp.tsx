@@ -1,5 +1,4 @@
 'use client';
-
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -110,7 +109,7 @@ export default function TempLoginForm() {
 					)}
 				/>
 				<Button type="submit" disabled={isLoading} className="w-full">
-					{isLoading ? 'Logging in...' : 'Login'}
+					{isLoading ? 'Joining...' : 'Join Now'}
 				</Button>
 			</form>
 		</Form>

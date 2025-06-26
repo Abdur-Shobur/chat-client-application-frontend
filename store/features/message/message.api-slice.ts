@@ -6,6 +6,7 @@ import { GroupType } from '../group/group.api-slice';
 interface SenderType {
 	_id: string;
 	name: string;
+	phone: string;
 	role?: {
 		_id: string;
 		name: string;

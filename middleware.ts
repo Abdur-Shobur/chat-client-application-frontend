@@ -5,7 +5,11 @@ import type { NextRequest } from 'next/server';
 export async function middleware(request: NextRequest) {
 	const { pathname, searchParams } = request.nextUrl;
 
-	const isAuthPage = pathname === '/auth';
+	// Define your auth pages
+	const isAuthPage =
+		pathname === '/auth' ||
+		pathname === '/auth/' ||
+		pathname === '/auth/admin-auth';
 	const isProtectedRoute = pathname === '/' || !pathname.startsWith('/auth');
 
 	const token = await getNextToken({
@@ -25,7 +29,7 @@ export async function middleware(request: NextRequest) {
 		return NextResponse.redirect(loginUrl);
 	}
 
-	// 2. Logged in and visiting /auth
+	// 2. Logged in and visiting an auth page
 	if (token && isAuthPage) {
 		const redirectTo = searchParams.get('redirectTo');
 		if (redirectTo) {

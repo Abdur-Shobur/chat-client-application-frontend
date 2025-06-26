@@ -28,7 +28,6 @@ export const connectSocket = async (): Promise<Socket | null> => {
 
 	// ❗ Prevent duplicate socket connections
 	if (socket && socket.connected) {
-		console.log('🔁 Reusing existing socket connection');
 		return socket;
 	}
 
@@ -48,7 +47,6 @@ export const connectSocket = async (): Promise<Socket | null> => {
 		socket!.connect(); // manually connect
 
 		socket!.on('connect', () => {
-			console.log('✅ Connected to socket.io server');
 			resolve(socket!);
 		});
 

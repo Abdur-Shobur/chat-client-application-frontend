@@ -82,7 +82,6 @@ export function AuthTab() {
 	async function onSubmit(data: z.infer<typeof FormSchema>) {
 		try {
 			const response = await login(data).unwrap();
-			console.log(response);
 			const result = await signIn('credentials', {
 				token: JSON.stringify(response),
 				redirect: false,

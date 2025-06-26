@@ -10,7 +10,6 @@ export default function UserDelete({ user }: { user: UserType }) {
 	const [deleteUser, { isLoading }] = useDeleteUserMutation();
 
 	const handleDelete = async () => {
-		console.log('user._id', user._id);
 		const confirmed = await confirm({
 			message:
 				'This action cannot be undone. This will permanently delete your account and remove your data from our servers.',
@@ -28,7 +27,6 @@ export default function UserDelete({ user }: { user: UserType }) {
 		});
 		if (confirmed) {
 			const response = await deleteUser(user._id).unwrap();
-			console.log(response);
 			if (response.statusCode === 200 && response.status) {
 				apiReqResponse(response);
 			} else {

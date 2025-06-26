@@ -51,6 +51,14 @@ export const api = apiSlice.injectEndpoints({
 			}),
 			invalidatesTags: ['Groups'],
 		}),
+		groupLeave: builder.mutation<any, { id: string }>({
+			query: (payload) => ({
+				url: `group/leave/${payload.id}`,
+				method: 'PATCH',
+				body: payload,
+			}),
+			invalidatesTags: ['Groups', 'Messages'],
+		}),
 
 		memberRemove: builder.mutation<any, { groupId: string; userId: string }>({
 			query: (payload) => ({
@@ -67,7 +75,7 @@ export const api = apiSlice.injectEndpoints({
 				method: 'POST',
 				body: payload,
 			}),
-			invalidatesTags: ['Groups'],
+			invalidatesTags: ['Groups', 'Messages'],
 		}),
 	}),
 });
@@ -81,4 +89,5 @@ export const {
 	useGroupCreateMutation,
 	useGroupUpdateMutation,
 	useGetMemberDetailsQuery,
+	useGroupLeaveMutation,
 } = api;

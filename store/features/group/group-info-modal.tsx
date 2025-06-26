@@ -20,7 +20,6 @@ export function GroupInfo({
 	groupId: string;
 }) {
 	const [open, setOpen] = useState(false);
-
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
@@ -43,7 +42,9 @@ export function GroupInfo({
 				{/* Tabs start here */}
 				<Tabs defaultValue="members" className="w-full mt-4">
 					<TabsList className="grid w-full grid-cols-2">
-						<TabsTrigger value="members">Members</TabsTrigger>
+						<TabsTrigger value="members">
+							Members ({userOrGroupInfo?.data?.members?.length || 0})
+						</TabsTrigger>
 						<TabsTrigger value="settings">Settings</TabsTrigger>
 					</TabsList>
 

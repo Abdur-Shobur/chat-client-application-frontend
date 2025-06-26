@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
 	Message,
 	useChatQuery,
@@ -17,13 +17,14 @@ import {
 	ChevronLeft,
 	Clock,
 	Copy,
-	Download,
+	Eye,
+	EyeOff,
 	Forward,
+	Inbox,
+	Loader2,
 	MoreVertical,
 	Reply,
 	ReplyAll,
-	ThumbsDown,
-	ThumbsUp,
 	Trash2,
 	X,
 } from 'lucide-react';
@@ -60,17 +61,18 @@ import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { connectSocket, getSocket } from '@/lib/socketClient';
 import { Input } from '@/components/ui/input';
-import { Socket } from 'socket.io-client';
 import UpdateVisibility from '@/store/features/message/message.update-visibility';
 import Link from 'next/link';
 import { GroupInfo } from '@/store/features/group/group-info-modal';
-import { UserType } from '@/types';
+import { Alert, AlertTitle } from '@/components/ui/alert';
+import GroupLeave from '@/store/features/group/group.leave';
 
 interface MailDisplayProps {
 	mail: Mail | null;
 }
 
 export function MailDisplay({ mail }: MailDisplayProps) {
+	const formRef = useRef<HTMLFormElement>(null);
 	const router = useRouter();
 	const params = useParams();
 	const [personalMessage, setPersonalMessage] = useState<Message | null>(null);
@@ -80,15 +82,24 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 	const searchParams = useSearchParams();
 	const type = searchParams.get('type') || 'personal';
 	const messagesEndRef = React.useRef<HTMLDivElement>(null);
-	const { data: initialMessages, isSuccess } = useGetChatMessagesQuery({
+	const {
+		data: initialMessages,
+		isSuccess,
+		isLoading,
+		error,
+		refetch,
+	} = useGetChatMessagesQuery({
 		chatType: searchParams.get('type') || 'personal',
 		targetId: params.id.toString(),
 	});
+
 	const { refetch: refetchMessages } = useChatQuery(undefined);
-	const { data: userOrGroupInfo } = useInfoUserOrGroupQuery({
-		id: params.id.toString(),
-		type: searchParams.get('type') || 'personal',
-	});
+
+	const { data: userOrGroupInfo, isLoading: isLoadingUserOrGroup } =
+		useInfoUserOrGroupQuery({
+			id: params.id.toString(),
+			type: searchParams.get('type') || 'personal',
+		});
 
 	// ✅ Local state to hold messages
 	// Import the Message type if not already imported
@@ -118,7 +129,6 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 				socket.emit('register', session.user.id);
 
 				const handleReceiveMessage = (message: any) => {
-					console.log({ message });
 					if (
 						type === 'group'
 							? message?.receiver !== params.id
@@ -128,12 +138,16 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 					}
 					return setMessages((prev) => [...prev, message]);
 				};
-
+				const handleVisibilityUpdate = () => {
+					refetch();
+				};
+				socket.on('visibilityUpdated', handleVisibilityUpdate);
 				socket.on('receiveMessage', handleReceiveMessage);
 
 				// Move this cleanup into the outer scope so useEffect can return it
 				return () => {
 					socket.off('receiveMessage', handleReceiveMessage);
+					socket.off('visibilityUpdated', handleVisibilityUpdate);
 					socket.disconnect();
 				};
 			} catch (err) {
@@ -161,8 +175,29 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 			</div>
 		);
 	}
+	const handleKeyDown = (
+		e: React.KeyboardEvent<HTMLTextAreaElement | HTMLInputElement>
+	) => {
+		const isEnter = e.key === 'Enter';
+		const isShift = e.shiftKey;
+		const isCtrlOrCmd = e.ctrlKey || e.metaKey;
 
-	console.log(messages);
+		// If Shift+Enter, allow newline in Textarea (but only in Textarea)
+		if (isEnter && isShift && e.currentTarget.tagName === 'TEXTAREA') {
+			return; // Let default behavior (newline in textarea)
+		}
+
+		// Submit on Enter (without Shift) or Ctrl/Cmd+Enter
+		if (
+			(isEnter && !isShift && e.currentTarget.tagName === 'TEXTAREA') || // Enter in textarea
+			(isEnter && e.currentTarget.tagName === 'INPUT') || // Enter in input
+			(isCtrlOrCmd && isEnter)
+		) {
+			e.preventDefault();
+			formRef.current?.requestSubmit();
+		}
+	};
+
 	const handleSend = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 
@@ -226,6 +261,7 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 			sender: {
 				_id: session.user.id,
 				name: 'You',
+				phone: '',
 			},
 		};
 
@@ -238,6 +274,37 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 		(e.target as HTMLFormElement).reset();
 		setInput('');
 		refetchMessages();
+	};
+
+	const handleToggleVisibility = async (
+		messageId: string,
+		currentVisibility: 'public' | 'private'
+	) => {
+		let socket = getSocket();
+
+		if (!socket || !socket.connected) {
+			try {
+				socket = await connectSocket();
+			} catch (err) {
+				console.error('Socket not connected:', err);
+				return;
+			}
+		}
+
+		const newVisibility = currentVisibility === 'public' ? 'private' : 'public';
+
+		if (socket) {
+			socket.emit('toggleVisibility', {
+				messageId,
+				visibility: newVisibility,
+			});
+
+			setMessages((prev) =>
+				prev.map((msg) =>
+					msg._id === messageId ? { ...msg, newVisibility } : msg
+				)
+			);
+		}
 	};
 
 	return (
@@ -407,9 +474,11 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 								</Avatar>
 							)}
 
-							<div className="font-semibold">{userOrGroupInfo?.data.name}</div>
+							<div className="font-semibold capitalize">
+								{userOrGroupInfo?.data.name}
+							</div>
 							<div className=" gap-1 hidden">
-								<div className="font-semibold">
+								<div className="font-semibold capitalize">
 									{userOrGroupInfo?.data.name}
 								</div>
 								<div className="line-clamp-1 text-xs">
@@ -418,170 +487,156 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 									</span>
 								</div>
 							</div>
+							{type === 'group' &&
+								userOrGroupInfo?.data.name &&
+								session.user.role !== 'admin' && (
+									<GroupLeave id={params.id.toString()} />
+								)}
 						</div>
-						{/* {mail.date && (
-							<div className="ml-auto text-xs text-muted-foreground">
-								{format(new Date(mail.date), 'PPpp')}
-							</div>
-						)} */}
 					</div>
 					<Separator />
 					<ScrollArea className="h-[calc(100vh-150px)] md:h-[calc(100vh-300px)]">
 						<div className="flex flex-col gap-2 p-4  max-w-[90%] mx-auto">
 							<div className="flex flex-col h-full">
-								<div className="flex-1 space-y-4 overflow-y-auto sm:p-4">
-									{messages?.map((message, index) => (
-										<div key={index} className={'flex gap-2'}>
-											{message.sender?._id !== session?.user.id &&
-												// If current user is admin, allow messaging anyone
-												(session?.user.role === 'admin' ? (
-													<Link
-														href={`/${message?.sender?._id}?type=personal`}
-														className="h-8 w-8 rounded-full bg-primary flex-shrink-0"
-													/>
-												) : // If current user is NOT admin, only allow messaging an admin
-												message.sender?.role?.type === 'admin' ? (
-													<Link
-														href={`/${message?.sender?._id}?type=personal`}
-														className="h-8 w-8 rounded-full bg-primary flex-shrink-0"
-													/>
-												) : (
-													// User is not admin, and sender is not admin — do not allow messaging
-													<div className="h-8 w-8 rounded-full bg-muted flex-shrink-0" />
-												))}
+								<div className=" flex-1 space-y-4 overflow-y-auto sm:p-4">
+									{isLoading && (
+										<div className="flex items-center justify-center">
+											<div className="border-gray-300 h-10 w-10 animate-spin rounded-full border-2 border-t-blue-600" />
+										</div>
+									)}
+									{!isLoading &&
+										messages?.map((message, index) => (
+											<div key={index} className={'group flex gap-2'}>
+												{message.sender?._id !== session?.user.id &&
+													// If current user is admin, allow messaging anyone
+													(session?.user.role === 'admin' ? (
+														<Link
+															href={`/${message?.sender?._id}?type=personal`}
+															className="h-8 w-8 rounded-full bg-primary flex-shrink-0"
+														/>
+													) : // If current user is NOT admin, only allow messaging an admin
+													message.sender?.role?.type === 'admin' ? (
+														<Link
+															href={`/${message?.sender?._id}?type=personal`}
+															className="h-8 w-8 rounded-full bg-primary flex-shrink-0"
+														/>
+													) : (
+														// User is not admin, and sender is not admin — do not allow messaging
+														<div className="h-8 w-8 rounded-full bg-muted flex-shrink-0" />
+													))}
 
-											<div
-												className={cn(
-													message.replyTo ? 'space-y-0 ' : 'space-y-2 ',
-													message.sender?._id === session?.user.id && 'ml-auto'
-												)}
-											>
-												<div className="flex items-center gap-2">
-													<span className="text-sm font-medium">
-														{message.sender?._id === session?.user.id
-															? 'You'
-															: message.sender?.name || 'Unknown'}
-													</span>
-													<span className="text-sm text-muted-foreground">
-														{format(new Date(message.createdAt), 'p')}
-													</span>
-												</div>
-												{message.replyTo && (
-													<div className="p-1 rounded-lg rounded-br-none bg-muted text-xs whitespace-pre-wrap opacity-65 ">
-														<p className="font-semibold">
-															{message.replyTo.sender?.name}
-														</p>
-														<p className="text-xs">{message.replyTo.text}</p>
-													</div>
-												)}
 												<div
-													className={`p-2 sm:p-3 rounded-lg rounded-br-none ${
-														message.sender?._id !== session?.user.id
-															? 'bg-muted/50'
-															: 'bg-blue-100'
-													}`}
+													className={cn(
+														message.replyTo ? 'space-y-0 ' : 'space-y-2 ',
+														message.sender?._id === session?.user.id &&
+															'ml-auto'
+													)}
 												>
-													<p className="text-sm whitespace-pre-wrap">
-														{message.text}
-													</p>
-												</div>
+													<div className="flex items-center gap-2">
+														<span className="text-sm font-medium capitalize">
+															{message.sender?._id === session?.user.id
+																? 'You'
+																: message.sender?.name || 'Unknown'}
+														</span>
 
-												{session?.user.role === 'admin' &&
-													message.sender?._id !== session?.user.id && (
-														<div className="flex items-center gap-2">
-															<Button
-																variant="ghost"
-																size="icon"
-																className="h-8 w-8"
-															>
-																<Copy className="h-4 w-4" />
-															</Button>
-															<Button
-																type="button"
-																onClick={() => setPersonalMessage(message)}
-																variant="ghost"
-																size="icon"
-																className="h-8 w-8"
-															>
-																<Reply className="h-4 w-4" />
-															</Button>
+														<span className="text-sm text-muted-foreground">
+															{format(new Date(message.createdAt), 'p')}
+														</span>
+														{session?.user.role === 'admin' &&
+															message.sender?._id !== session?.user.id && (
+																<div className="opacity-0 group-hover:opacity-100 flex items-center gap-2">
+																	<Button
+																		variant="ghost"
+																		size="icon"
+																		className="h-8 w-8"
+																	>
+																		<Copy className="h-4 w-4" />
+																	</Button>
+																	<Button
+																		type="button"
+																		onClick={() => setPersonalMessage(message)}
+																		variant="ghost"
+																		size="icon"
+																		className="h-8 w-8"
+																	>
+																		<Reply className="h-4 w-4" />
+																	</Button>
 
-															<UpdateVisibility
-																id={message._id}
-																visibility={message.visibility || 'private'}
-															/>
+																	<Button
+																		aria-label="Toggle visibility"
+																		variant="ghost"
+																		size="icon"
+																		className="h-8 w-8"
+																		onClick={() =>
+																			handleToggleVisibility(
+																				message._id,
+																				message.visibility
+																			)
+																		}
+																	>
+																		{message.visibility === 'public' ? (
+																			<Eye className="text-green-500" />
+																		) : (
+																			<EyeOff className="text-red-500" />
+																		)}
+																	</Button>
+
+																	{/* <UpdateVisibility
+																		id={message._id}
+																		visibility={message.visibility || 'private'}
+																	/> */}
+																</div>
+															)}
+													</div>
+
+													{message.sender?._id !== session?.user.id && (
+														<span className="text-xs font-medium ">
+															{message.sender.phone}
+														</span>
+													)}
+													{message.replyTo && (
+														<div className="p-1 rounded-lg rounded-br-none bg-muted text-xs whitespace-pre-wrap opacity-65 ">
+															<p className="font-semibold">
+																{message.replyTo.sender?.name}
+															</p>
+															<p className="text-xs">{message.replyTo.text}</p>
 														</div>
 													)}
+													<div
+														className={`p-2 sm:p-3 rounded-lg rounded-br-none ${
+															message.sender?._id !== session?.user.id
+																? 'bg-muted/50'
+																: 'bg-blue-100'
+														}`}
+													>
+														<p className="text-sm whitespace-pre-wrap">
+															{message.text}
+														</p>
+													</div>
+												</div>
 											</div>
-										</div>
-									))}
-								</div>
+										))}
 
-								{/* <div className="p-4 border-t flex gap-2">
-									<input
-										value={input}
-										onChange={(e) => setInput(e.target.value)}
-										className="flex-1 border rounded px-3 py-2"
-										placeholder="Type your message..."
-									/>
-									<Button onClick={handleSend}>Send</Button>
-								</div> */}
-							</div>
-							{/* {messages.map((message, index) => (
-								<div
-									key={index}
-									className={cn(
-										'flex gap-2 max-w-[80%]',
-										message.role === 'user' && 'ml-auto'
-									)}
-								>
-									{message.role === 'agent' && (
-										<div className="h-8 w-8 rounded-full bg-primary flex-shrink-0" />
-									)}
-									<div className="space-y-2">
-										<div className="flex items-center gap-2">
-											<span className="text-sm font-medium">
-												{message.role === 'agent' ? 'GenerativeAgent' : 'G5'}
-											</span>
-											<span className="text-sm text-muted-foreground">
-												{message.timestamp}
-											</span>
+									{!isLoading && messages?.length === 0 && (
+										<div>
+											<Alert className="flex gap-2 align-center ">
+												<Inbox className="h-4 w-4 !top-3" />
+												<AlertTitle className="mb-0">
+													{(error && (error as any)?.data?.message) ||
+														'No messages found'}
+												</AlertTitle>
+											</Alert>
 										</div>
-										<div
-											className={`p-3 rounded-lg ${
-												message.role === 'agent' ? 'bg-muted/50' : 'bg-blue-100'
-											}`}
-										>
-											<p className="text-sm whitespace-pre-wrap">
-												{message.content}
-											</p>
-										</div>
-										{message.role === 'agent' && (
-											<div className="flex items-center gap-2">
-												<Button variant="ghost" size="icon" className="h-8 w-8">
-													<Copy className="h-4 w-4" />
-												</Button>
-												<Button variant="ghost" size="icon" className="h-8 w-8">
-													<Download className="h-4 w-4" />
-												</Button>
-												<Button variant="ghost" size="icon" className="h-8 w-8">
-													<ThumbsUp className="h-4 w-4" />
-												</Button>
-												<Button variant="ghost" size="icon" className="h-8 w-8">
-													<ThumbsDown className="h-4 w-4" />
-												</Button>
-											</div>
-										)}
-									</div>
+									)}
 								</div>
-							))} */}
+							</div>
 						</div>
 						<div ref={messagesEndRef} />
 					</ScrollArea>
 
 					<Separator className="mt-auto" />
 					<div className="p-4">
-						<form onSubmit={handleSend}>
+						<form ref={formRef} onSubmit={handleSend}>
 							<div className="flex md:grid gap-4 relative">
 								{personalMessage && (
 									<div className="absolute -top-11 left-0 w-full h-auto bg-gray-200 p-1 rounded-md text-xs">
@@ -601,6 +656,7 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 									value={input}
 									onChange={(e) => setInput(e.target.value)}
 									name="message"
+									onKeyDown={handleKeyDown}
 									className="md:hidden flex-1"
 									placeholder={`Reply ${mail.name}...`}
 								/>
@@ -608,6 +664,7 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 									value={input}
 									onChange={(e) => setInput(e.target.value)}
 									name="message"
+									onKeyDown={handleKeyDown}
 									className="hidden md:block resize-none"
 									placeholder={`Reply ${mail.name}...`}
 								/>

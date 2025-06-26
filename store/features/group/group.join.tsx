@@ -46,7 +46,6 @@ export default function GroupJoin() {
 	const handleJoin = async () => {
 		try {
 			const { data } = await joinGroup({ groupId: groupId! }).unwrap();
-			console.log(data);
 			if (data.message === 'Successfully joined the group.') {
 				toast({
 					title: 'Success',
