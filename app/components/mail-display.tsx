@@ -634,48 +634,52 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 						<div ref={messagesEndRef} />
 					</ScrollArea>
 
-					<Separator className="mt-auto" />
-					<div className="p-4">
-						<form ref={formRef} onSubmit={handleSend}>
-							<div className="flex md:grid gap-4 relative">
-								{personalMessage && (
-									<div className="absolute -top-11 left-0 w-full h-auto bg-gray-200 p-1 rounded-md text-xs">
-										<p className="font-semibold">
-											{personalMessage.sender.name}
-										</p>
-										<p>{personalMessage.text}</p>
-										<button
-											className="absolute top-1 right-1"
-											onClick={() => setPersonalMessage(null)}
-										>
-											<X className="h-4 w-4" />
-										</button>
+					{!error && (
+						<>
+							<Separator className="mt-auto" />
+							<div className="p-4">
+								<form ref={formRef} onSubmit={handleSend}>
+									<div className="flex md:grid gap-4 relative">
+										{personalMessage && (
+											<div className="absolute -top-11 left-0 w-full h-auto bg-gray-200 p-1 rounded-md text-xs">
+												<p className="font-semibold">
+													{personalMessage.sender.name}
+												</p>
+												<p>{personalMessage.text}</p>
+												<button
+													className="absolute top-1 right-1"
+													onClick={() => setPersonalMessage(null)}
+												>
+													<X className="h-4 w-4" />
+												</button>
+											</div>
+										)}
+										<Input
+											value={input}
+											onChange={(e) => setInput(e.target.value)}
+											name="message"
+											onKeyDown={handleKeyDown}
+											className="md:hidden flex-1"
+											placeholder={`Reply ${mail.name}...`}
+										/>
+										<Textarea
+											value={input}
+											onChange={(e) => setInput(e.target.value)}
+											name="message"
+											onKeyDown={handleKeyDown}
+											className="hidden md:block resize-none"
+											placeholder={`Reply ${mail.name}...`}
+										/>
+										<div className="flex items-end">
+											<Button type="submit" size="sm" className="ml-auto">
+												Send
+											</Button>
+										</div>
 									</div>
-								)}
-								<Input
-									value={input}
-									onChange={(e) => setInput(e.target.value)}
-									name="message"
-									onKeyDown={handleKeyDown}
-									className="md:hidden flex-1"
-									placeholder={`Reply ${mail.name}...`}
-								/>
-								<Textarea
-									value={input}
-									onChange={(e) => setInput(e.target.value)}
-									name="message"
-									onKeyDown={handleKeyDown}
-									className="hidden md:block resize-none"
-									placeholder={`Reply ${mail.name}...`}
-								/>
-								<div className="flex items-end">
-									<Button type="submit" size="sm" className="ml-auto">
-										Send
-									</Button>
-								</div>
+								</form>
 							</div>
-						</form>
-					</div>
+						</>
+					)}
 				</div>
 			) : (
 				<div className="p-8 text-center text-muted-foreground">
