@@ -1,7 +1,5 @@
 'use client';
 import React from 'react';
-import { useGroupByIdQuery } from './group.api-slice';
-import { useParams } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Copy } from 'lucide-react';
@@ -9,7 +7,6 @@ import { toast } from '@/hooks/use-toast';
 import { env } from '@/lib';
 
 export default function GroupSettings({ groupId }: { groupId: string }) {
-	const { data: groupData, isLoading } = useGroupByIdQuery({ id: groupId });
 	const joinLink = `${env.next_auth_url}?type=group&join=${groupId}`;
 	const handleCopy = (link: string) => {
 		navigator.clipboard.writeText(link);

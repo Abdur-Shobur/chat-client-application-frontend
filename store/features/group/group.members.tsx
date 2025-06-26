@@ -8,7 +8,12 @@ import { FileDown } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function GroupMembers({ groupId }: { groupId: string }) {
-	const { data: groupData, isLoading } = useGroupByIdQuery({ id: groupId });
+	const { data: groupData, isLoading } = useGroupByIdQuery(
+		{ id: groupId },
+		{
+			skip: !groupId,
+		}
+	);
 	const [searchTerm, setSearchTerm] = useState('');
 
 	const filteredMembers = useMemo(() => {
