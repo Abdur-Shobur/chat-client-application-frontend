@@ -37,6 +37,7 @@ export function MailDisplay() {
 	const [messages, setMessages] = useState<Message[]>([]);
 	const scrollContainerRef = useRef<HTMLDivElement>(null);
 	const oldScrollHeight = useRef(0);
+	const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 
 	const [page, setPage] = useState(1);
 	const {
@@ -426,12 +427,23 @@ export function MailDisplay() {
 																	variant="ghost"
 																	size="icon"
 																	className="h-8 w-8"
+																	onClick={() => {
+																		navigator.clipboard.writeText(
+																			message.text || ''
+																		);
+																	}}
 																>
 																	<Copy className="h-4 w-4" />
 																</Button>
+
 																<Button
 																	type="button"
-																	onClick={() => setPersonalMessage(message)}
+																	onClick={() => {
+																		setPersonalMessage(message);
+																		if (inputRef.current) {
+																			inputRef.current.focus();
+																		}
+																	}}
 																	variant="ghost"
 																	size="icon"
 																	className="h-8 w-8"
@@ -439,29 +451,26 @@ export function MailDisplay() {
 																	<Reply className="h-4 w-4" />
 																</Button>
 
-																<Button
-																	aria-label="Toggle visibility"
-																	variant="ghost"
-																	size="icon"
-																	className="h-8 w-8"
-																	onClick={() =>
-																		handleToggleVisibility(
-																			message._id,
-																			message.visibility
-																		)
-																	}
-																>
-																	{message.visibility === 'public' ? (
-																		<Eye className="text-green-500" />
-																	) : (
-																		<EyeOff className="text-red-500" />
-																	)}
-																</Button>
-
-																{/* <UpdateVisibility
-																		id={message._id}
-																		visibility={message.visibility || 'private'}
-																	/> */}
+																{type === 'group' && (
+																	<Button
+																		aria-label="Toggle visibility"
+																		variant="ghost"
+																		size="icon"
+																		className="h-8 w-8"
+																		onClick={() =>
+																			handleToggleVisibility(
+																				message._id,
+																				message.visibility
+																			)
+																		}
+																	>
+																		{message.visibility === 'public' ? (
+																			<Eye className="text-green-500" />
+																		) : (
+																			<EyeOff className="text-red-500" />
+																		)}
+																	</Button>
+																)}
 															</div>
 														)}
 												</div>
@@ -532,6 +541,7 @@ export function MailDisplay() {
 										</div>
 									)}
 									<Input
+										ref={inputRef as React.RefObject<HTMLInputElement>}
 										value={input}
 										onChange={(e) => setInput(e.target.value)}
 										name="message"
@@ -540,6 +550,7 @@ export function MailDisplay() {
 										placeholder={`Type your message...`}
 									/>
 									<Textarea
+										ref={inputRef as React.RefObject<HTMLTextAreaElement>}
 										value={input}
 										onChange={(e) => setInput(e.target.value)}
 										name="message"
