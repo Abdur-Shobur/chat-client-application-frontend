@@ -65,18 +65,6 @@ export const api = apiSlice.injectEndpoints({
 		>({
 			query: ({ chatType, targetId, limit = 10, page }) =>
 				`/messages/chat-messages/${chatType}/${targetId}?page=${page}&limit=${limit}`,
-
-			serializeQueryArgs: ({ endpointName }) => endpointName,
-
-			merge: (currentCache, newItems) => {
-				currentCache.data.data.push(...newItems.data.data);
-				currentCache.data.meta = newItems.data.meta;
-			},
-
-			forceRefetch({ currentArg, previousArg }) {
-				return currentArg?.page !== previousArg?.page;
-			},
-
 			providesTags: ['Messages'],
 		}),
 
