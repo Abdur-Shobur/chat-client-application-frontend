@@ -14,7 +14,6 @@ import { GroupCreate } from '@/store/features/group';
 import { Badge } from '@/components/ui/badge';
 import { connectSocket } from '@/lib/socketClient';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertDialog, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Alert, AlertTitle } from '@/components/ui/alert';
 import { PopcornIcon } from 'lucide-react';
 // import { socket } from '@/lib/socketClient';
@@ -80,8 +79,8 @@ export default function Inbox() {
 		<Tabs defaultValue="all">
 			<div className="flex items-center justify-between gap-5 px-5 py-4">
 				<div className="flex items-center gap-2">
-					<Link href="/" className="text-xl font-bold">
-						Inbox
+					<Link href="/" className="text-xl font-bold capitalize">
+						{session?.user.name || 'Inbox'}
 					</Link>
 					{isAdmin && <GroupCreate />}
 				</div>
