@@ -55,12 +55,19 @@ export default function GroupJoin() {
 				router.push(`/` + groupId + '?type=group');
 			}
 		} catch (err: any) {
-			toast({
-				variant: 'destructive',
-				title: 'Error',
-				description:
-					err?.data?.message || 'Failed to join group. Please try again later.',
-			});
+			console.log(err);
+			if (err.data?.message === 'You are already a member of this group.') {
+				setOpen(false);
+				router.push(`/` + groupId + '?type=group');
+			} else {
+				toast({
+					variant: 'destructive',
+					title: 'Error',
+					description:
+						err?.data?.message ||
+						'Failed to join group. Please try again later.',
+				});
+			}
 		}
 	};
 

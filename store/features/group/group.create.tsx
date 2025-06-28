@@ -37,6 +37,7 @@ import { SquarePen } from 'lucide-react';
 import { useGroupCreateMutation } from './group.api-slice';
 import GroupUsers from './group.users';
 import { toast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 // fake users for member select simulation
 const mockUsers = [{ id: '67b2c9fc32c98e2ba9cce8d2', name: 'John Doe' }];
@@ -54,6 +55,7 @@ const groupSchema = z.object({
 type GroupSchema = z.infer<typeof groupSchema>;
 
 export function GroupCreate() {
+	const router = useRouter();
 	const [createGroup, { isLoading }] = useGroupCreateMutation();
 	const [step, setStep] = useState<1 | 2>(1); // Step 1: Group Info, Step 2: Select Members
 	const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
@@ -78,6 +80,11 @@ export function GroupCreate() {
 				...values,
 				members: selectedMembers,
 			}).unwrap();
+
+			if (response?.data?._id) {
+				router.push(`/${response.data._id}?type=group`);
+			}
+			console.log(response.data._id);
 
 			toast({
 				title: 'Successfully!',

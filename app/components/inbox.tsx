@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { connectSocket } from '@/lib/socketClient';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertTitle } from '@/components/ui/alert';
-import { PopcornIcon } from 'lucide-react';
+import { Inbox as InboxIcon } from 'lucide-react';
 // import { socket } from '@/lib/socketClient';
 
 export default function Inbox() {
@@ -134,8 +134,7 @@ export default function Inbox() {
 									<div className="flex w-full flex-col gap-1">
 										<div className="flex items-center">
 											<div className="flex items-center gap-2">
-												<div className="font-semibold">{name}</div>
-												{/* You can show unread dot here if needed */}
+												<div className="font-semibold capitalize">{name}</div>
 											</div>
 											{item?.lastMessage?.createdAt && (
 												<div className="ml-auto text-xs text-muted-foreground">
@@ -159,8 +158,8 @@ export default function Inbox() {
 					{!isLoading && filteredMessages?.length === 0 && (
 						<div className="flex flex-col items-center gap-2 p-4 pt-0">
 							<Alert className="flex gap-2 align-center ">
-								<PopcornIcon className="h-4 w-4 !top-3" />
-								<AlertTitle className="mb-0">No messages found</AlertTitle>
+								<InboxIcon className="h-4 w-4 !top-3" />
+								<AlertTitle className="mb-0">No Chat Found</AlertTitle>
 							</Alert>
 						</div>
 					)}

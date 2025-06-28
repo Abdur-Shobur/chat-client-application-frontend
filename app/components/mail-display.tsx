@@ -38,14 +38,12 @@ export function MailDisplay() {
 	const scrollContainerRef = useRef<HTMLDivElement>(null);
 	const oldScrollHeight = useRef(0);
 	const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
-
 	const [page, setPage] = useState(1);
 	const {
 		data: initialMessages,
 		isSuccess,
 		isLoading,
 		error,
-		refetch,
 		isFetching,
 	} = useGetChatMessagesQuery({
 		chatType: searchParams.get('type') || 'personal',
@@ -136,8 +134,17 @@ export function MailDisplay() {
 					}
 					return setMessages((prev) => [...prev, message]);
 				};
-				const handleVisibilityUpdate = () => {
-					refetch();
+				const handleVisibilityUpdate = (message: any) => {
+					console.log('message', message);
+					if (message) {
+						setMessages((prev) =>
+							prev.map((msg) =>
+								msg._id === message._id
+									? { ...msg, visibility: message.visibility }
+									: msg
+							)
+						);
+					}
 				};
 				socket.on('visibilityUpdated', handleVisibilityUpdate);
 				socket.on('receiveMessage', handleReceiveMessage);
@@ -254,6 +261,8 @@ export function MailDisplay() {
 				: {}),
 		};
 
+		console.log(newMessage);
+
 		socket.emit('sendMessage', newMessage);
 
 		// Optimistically update UI including reply info
@@ -312,9 +321,11 @@ export function MailDisplay() {
 				visibility: newVisibility,
 			});
 
+			console.log('fire');
+
 			setMessages((prev) =>
 				prev.map((msg) =>
-					msg._id === messageId ? { ...msg, newVisibility } : msg
+					msg._id === messageId ? { ...msg, visibility: newVisibility } : msg
 				)
 			);
 		}
@@ -341,7 +352,7 @@ export function MailDisplay() {
 						) : (
 							<Avatar>
 								<AvatarImage alt={userOrGroupInfo?.data.name} />
-								<AvatarFallback>
+								<AvatarFallback className="capitalize">
 									{userOrGroupInfo?.data.name
 										.split(' ')
 										.map((chunk) => chunk[0])
@@ -546,7 +557,7 @@ export function MailDisplay() {
 										onChange={(e) => setInput(e.target.value)}
 										name="message"
 										onKeyDown={handleKeyDown}
-										className="md:hidden flex-1"
+										className="md:hidden md:invisible flex-1"
 										placeholder={`Type your message...`}
 									/>
 									<Textarea
@@ -555,7 +566,7 @@ export function MailDisplay() {
 										onChange={(e) => setInput(e.target.value)}
 										name="message"
 										onKeyDown={handleKeyDown}
-										className="hidden md:block resize-none"
+										className="hidden invisible md:visible md:block resize-none"
 										placeholder={`Type your message...`}
 									/>
 									<div className="flex items-end">

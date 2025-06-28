@@ -3,12 +3,14 @@ import { ApiResponse } from '../basic-api';
 export interface GroupType {
 	_id?: string;
 	name: string;
+	createdBy: string;
 	joinType: 'public' | 'private';
 	status: 'active' | 'inactive';
 	joinApprovalType: 'auto' | 'manual';
 	description?: string | undefined;
 	welcomeMessage?: string | undefined;
 	members?: string[] | undefined;
+	leaveMembers?: string[] | undefined;
 	createdAt?: any;
 }
 

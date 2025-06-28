@@ -25,7 +25,7 @@ export function GroupInfo({
 			<DialogTrigger asChild>
 				<Avatar className="cursor-pointer">
 					<AvatarImage alt={userOrGroupInfo?.data.name} />
-					<AvatarFallback>
+					<AvatarFallback className="capitalize">
 						{userOrGroupInfo?.data.name
 							.split(' ')
 							.map((chunk: any) => chunk[0])

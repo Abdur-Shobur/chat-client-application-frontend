@@ -32,10 +32,10 @@ export default function GroupMembers({ groupId }: { groupId: string }) {
 	// Export CSV logic
 	const handleExportCSV = () => {
 		const headers = ['Name', 'Phone'];
-		const rows = filteredMembers.map((member: any) => [
-			member.name,
-			member.phone,
-		]);
+		const rows = [
+			...filteredMembers,
+			...(groupData?.data?.leaveMembers ?? []),
+		].map((member: any) => [member.name, member.phone]);
 
 		const csvContent =
 			'data:text/csv;charset=utf-8,' +
@@ -92,12 +92,33 @@ export default function GroupMembers({ groupId }: { groupId: string }) {
 						<p className="text-sm text-gray-700">Email: {member.email}</p>
 						<p className="text-sm text-gray-700">Phone: {member.phone}</p>
 						<p className="text-sm text-gray-500">Status: {member.status}</p>
-						{member?._id && (
+						{member?._id && member._id !== groupData?.data.createdBy && (
 							<MemberRemove groupId={groupId} userId={member._id} />
 						)}
 					</div>
 				))}
 			</div>
+			{/* Member Grid */}
+			{(groupData?.data.leaveMembers?.length ?? 0) > 0 && (
+				<>
+					<h3>Leave Members</h3>
+					<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+						{groupData?.data.leaveMembers?.map((member: any) => (
+							<div
+								key={member._id}
+								className="border p-4 rounded shadow-sm bg-white"
+							>
+								<h3 className="text-lg font-medium capitalize">
+									{member.name}
+								</h3>
+								<p className="text-sm text-gray-700">Email: {member.email}</p>
+								<p className="text-sm text-gray-700">Phone: {member.phone}</p>
+								<p className="text-sm text-gray-500">Status: {member.status}</p>
+							</div>
+						))}
+					</div>
+				</>
+			)}
 		</div>
 	);
 }
