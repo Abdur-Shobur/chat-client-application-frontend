@@ -3,7 +3,7 @@ import { ApiResponse } from '../basic-api';
 export interface GroupType {
 	_id?: string;
 	name: string;
-	createdBy: string;
+	createdBy?: string;
 	joinType: 'public' | 'private';
 	status: 'active' | 'inactive';
 	joinApprovalType: 'auto' | 'manual';
