@@ -30,24 +30,11 @@ export default function GroupJoin() {
 
 	const [joinGroup, { isLoading: joining }] = useGroupJoinMutation();
 
-	// Check if user is already a member
-	const isAlreadyMember = groupData?.data?.members?.some(
-		(member: any) => member._id === session?.user?.id
-	);
-
 	useEffect(() => {
-		if (type === 'group' && groupId && session?.user?.id) {
-			// If data is loaded and user is already a member, redirect directly
-			if (groupData && isAlreadyMember) {
-				router.push(`/${groupId}?type=group`);
-				return;
-			}
-			// If data is loaded and user is not a member, show modal
-			if (groupData && !isAlreadyMember) {
-				setOpen(true);
-			}
+		if (type === 'group' && groupId) {
+			setOpen(true);
 		}
-	}, [type, groupId, session?.user?.id, groupData, isAlreadyMember, router]);
+	}, [type, groupId]);
 
 	// Redirect to home if modal closes
 	const handleClose = () => {
@@ -64,13 +51,13 @@ export default function GroupJoin() {
 					description: 'Joined group successfully',
 				});
 				setOpen(false);
-				router.push(`/${groupId}?type=group`);
+				router.push(`/` + groupId + '?type=group');
 			}
 		} catch (err: any) {
 			console.log(err);
 			if (err.data?.message === 'You are already a member of this group.') {
 				setOpen(false);
-				router.push(`/${groupId}?type=group`);
+				router.push(`/` + groupId + '?type=group');
 			} else {
 				toast({
 					variant: 'destructive',
@@ -82,11 +69,6 @@ export default function GroupJoin() {
 			}
 		}
 	};
-
-	// Don't render the dialog if user is already a member
-	if (isAlreadyMember) {
-		return null;
-	}
 
 	return (
 		<Dialog open={open} onOpenChange={handleClose}>
