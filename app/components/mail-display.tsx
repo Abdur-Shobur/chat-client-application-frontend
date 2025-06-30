@@ -335,14 +335,17 @@ export function MailDisplay() {
 		<div className="flex h-full flex-col">
 			<div className="flex flex-1 flex-col">
 				<div className="flex items-start px-4 py-3 gap-2">
-					<Button
-						className="lg:hidden"
-						variant="outline"
-						size="icon"
-						onClick={() => router.back()}
-					>
-						<ChevronLeft size={20} />
-					</Button>
+					{session.user.role === 'admin' && (
+						<Button
+							className="lg:hidden"
+							variant="outline"
+							size="icon"
+							onClick={() => router.back()}
+						>
+							<ChevronLeft size={20} />
+						</Button>
+					)}
+
 					<div className="flex items-center gap-4 text-sm">
 						{type === 'group' && session.user.role === 'admin' ? (
 							<GroupInfo

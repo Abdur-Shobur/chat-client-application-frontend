@@ -3,18 +3,25 @@
 import Inbox from '@/app/components/inbox';
 import GroupJoin from '@/store/features/group/group.join';
 import { useSession } from 'next-auth/react';
-import { useParams, usePathname } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import React from 'react';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
 	const params = useParams();
-	const isDetailPage = params?.id || false;
+	const isDetailPage = Boolean(params?.id);
 	const { data: session } = useSession();
+
+	const isAdmin = session?.user?.role === 'admin';
+
+	// If user is not admin and it's a detail page, just return children only
+	if (!isAdmin && isDetailPage) {
+		return <>{children}</>;
+	}
 
 	return (
 		<div className="grid grid-cols-12 min-h-screen">
-			{/* Inbox column - hidden on mobile if viewing detail page */}
-			{/* {session?.user?.role === 'admin' && (
+			{/* Inbox column - only visible for admin */}
+			{isAdmin && (
 				<div
 					className={`col-span-12 lg:col-span-3 border-r ${
 						isDetailPage ? 'hidden lg:block' : ''
@@ -22,16 +29,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 				>
 					<Inbox />
 				</div>
-			)} */}
-			<div
-				className={`col-span-12 lg:col-span-3 border-r ${
-					isDetailPage ? 'hidden lg:block' : ''
-				}`}
-			>
-				<Inbox />
-			</div>
+			)}
+
+			{/* GroupJoin stays unless in the detail view for non-admin */}
 			<GroupJoin />
-			{/* Children (message view) - hidden on mobile if not viewing detail page */}
+
 			<div
 				className={`col-span-12 lg:col-span-9 ${
 					!isDetailPage ? 'hidden lg:block' : ''
