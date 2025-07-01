@@ -42,6 +42,17 @@ export const connectSocket = async (): Promise<Socket | null> => {
 		});
 	}
 
+	// if (!socket) {
+	// 	socket = io(env.baseRoute, {
+	// 		// path: env.development ? '/socket.io' : '/backend/socket.io',
+	// 		auth: {
+	// 			token: session.accessToken,
+	// 		},
+	// 		autoConnect: false, // Important!
+	// 		transports: ['websocket'],
+	// 	});
+	// }
+
 	return new Promise((resolve, reject) => {
 		socket!.auth = { token: session.accessToken }; // Re-assign token in case it changed
 

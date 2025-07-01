@@ -23,7 +23,6 @@ import Link from 'next/link';
 import { GroupInfo } from '@/store/features/group/group-info-modal';
 import { Alert, AlertTitle } from '@/components/ui/alert';
 import GroupLeave from '@/store/features/group/group.leave';
-import { UserType } from '@/store/features/user';
 
 export function MailDisplay() {
 	const formRef = useRef<HTMLFormElement>(null);
@@ -40,8 +39,6 @@ export function MailDisplay() {
 	const oldScrollHeight = useRef(0);
 	const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 	const [page, setPage] = useState(1);
-	const [activeUsers, setActiveUsers] = useState<UserType[]>([]);
-
 	const {
 		data: initialMessages,
 		isSuccess,
@@ -88,14 +85,9 @@ export function MailDisplay() {
 				const newMessages = updatedMessages.filter(
 					(msg) => !prevIds.has(msg._id)
 				);
-				const combined = [...newMessages, ...merged];
 
-				// return updatedMessages;
+				return updatedMessages;
 				// return [...newMessages, ...merged];
-				return combined.sort(
-					(a, b) =>
-						new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-				);
 			});
 
 			// setMessages((prev) => {
@@ -149,21 +141,12 @@ export function MailDisplay() {
 		const setupSocket = async () => {
 			try {
 				const socket = await connectSocket();
-
 				if (!socket || !session) {
 					console.error('❌ Socket connection failed');
 					return;
 				}
 
 				socket.emit('register', session.user.id);
-				const handleActiveUsers = (users: any[]) => {
-					setActiveUsers(users); // You'll need to define setActiveUsers in state
-				};
-
-				socket.emit('getActiveUsers');
-
-				socket.on('activeUsers', handleActiveUsers);
-				socket.on('activeUsersUpdated', handleActiveUsers);
 
 				const handleReceiveMessage = (message: any) => {
 					if (
@@ -176,17 +159,9 @@ export function MailDisplay() {
 					return setMessages((prev) => [...prev, message]);
 				};
 				const handleVisibilityUpdate = (message: any) => {
-					const isAdmin = session.user.role === 'admin';
+					console.log('message=>>', message);
 					if (message) {
-						if (!isAdmin) {
-							refetch();
-
-							if (message.visibility === 'private') {
-								setMessages((prev) => {
-									return prev.filter((msg) => msg._id !== message.messageId);
-								});
-							}
-						}
+						refetch();
 						setMessages((prev) =>
 							prev.map((msg) =>
 								msg._id === message._id
@@ -196,16 +171,13 @@ export function MailDisplay() {
 						);
 					}
 				};
-
 				socket.on('visibilityUpdated', handleVisibilityUpdate);
 				socket.on('receiveMessage', handleReceiveMessage);
 
 				// Move this cleanup into the outer scope so useEffect can return it
 				return () => {
-					socket.off('activeUsers');
-					socket.off('activeUsersUpdated');
-					socket.off('receiveMessage');
-					socket.off('visibilityUpdated');
+					socket.off('receiveMessage', handleReceiveMessage);
+					socket.off('visibilityUpdated', handleVisibilityUpdate);
 					socket.disconnect();
 				};
 			} catch (err) {
@@ -314,6 +286,8 @@ export function MailDisplay() {
 				: {}),
 		};
 
+		console.log(newMessage);
+
 		socket.emit('sendMessage', newMessage);
 
 		// Optimistically update UI including reply info
@@ -371,6 +345,8 @@ export function MailDisplay() {
 				messageId,
 				visibility: newVisibility,
 			});
+
+			console.log('fire');
 
 			setMessages((prev) =>
 				prev.map((msg) =>
@@ -448,14 +424,7 @@ export function MailDisplay() {
 								)}
 								{!isLoading &&
 									messages?.map((message, index) => (
-										<div key={index} className={'group flex gap-2 relative'}>
-											{message.sender?._id !== session?.user.id && (
-												<span className="absolute -top-1 left-4 text-[8px]">
-													{activeUsers.some(
-														(u) => u._id === message.sender._id
-													) && '🟢'}
-												</span>
-											)}
+										<div key={index} className={'group flex gap-2'}>
 											{message.sender?._id !== session?.user.id &&
 												// If current user is admin, allow messaging anyone
 												(session?.user.role === 'admin' ? (
@@ -545,14 +514,11 @@ export function MailDisplay() {
 														)}
 												</div>
 
-												{session?.user.role === 'admin' &&
-													message.sender?._id !== session?.user.id && (
-														<>
-															<span className="text-xs font-medium ">
-																{message.sender.phone}
-															</span>
-														</>
-													)}
+												{message.sender?._id !== session?.user.id && (
+													<span className="text-xs font-medium ">
+														{message.sender.phone}
+													</span>
+												)}
 												{message.replyTo && (
 													<div className="p-1 rounded-lg rounded-br-none bg-muted text-xs whitespace-pre-wrap opacity-65 ">
 														<p className="font-semibold">
