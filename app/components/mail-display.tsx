@@ -24,6 +24,7 @@ import { GroupInfo } from '@/store/features/group/group-info-modal';
 import { Alert, AlertTitle } from '@/components/ui/alert';
 import GroupLeave from '@/store/features/group/group.leave';
 import { UserType } from '@/store/features/user';
+import { MessageComponent } from '@/lib';
 
 export function MailDisplay() {
 	const formRef = useRef<HTMLFormElement>(null);
@@ -568,9 +569,10 @@ export function MailDisplay() {
 															: 'bg-blue-100'
 													}`}
 												>
-													<p className="text-sm whitespace-pre-wrap">
+													<MessageComponent message={message} />
+													{/* <div className="text-sm whitespace-pre-wrap">
 														{message.text}
-													</p>
+													</div> */}
 												</div>
 											</div>
 										</div>

@@ -148,7 +148,7 @@ export default function Inbox() {
 											)}
 										</div>
 										<div className="text-xs font-medium">
-											{item.lastMessage?.text}
+											{item.lastMessage?.text.slice(0, 30) + '...'}
 										</div>
 									</div>
 								</Link>

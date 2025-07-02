@@ -32,7 +32,7 @@ export const connectSocket = async (): Promise<Socket | null> => {
 	}
 
 	if (!socket) {
-		socket = io(`https://zoom.com.im`, {
+		socket = io(env.next_auth_url, {
 			path: '/backend/socket.io',
 			auth: {
 				token: session.accessToken,
