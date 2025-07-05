@@ -32,14 +32,25 @@ export const connectSocket = async (): Promise<Socket | null> => {
 	}
 
 	if (!socket) {
-		socket = io(env.next_auth_url, {
-			path: '/backend/socket.io',
-			auth: {
-				token: session.accessToken,
-			},
-			autoConnect: false, // Important!
-			transports: ['websocket'],
-		});
+		if (env.production) {
+			socket = io(env.next_auth_url, {
+				path: '/backend/socket.io',
+				auth: {
+					token: session.accessToken,
+				},
+				autoConnect: false, // Important!
+				transports: ['websocket'],
+			});
+		} else {
+			socket = io(env.baseRoute, {
+				path: '/socket.io',
+				auth: {
+					token: session.accessToken,
+				},
+				autoConnect: false, // Important!
+				transports: ['websocket'],
+			});
+		}
 	}
 
 	// if (!socket) {

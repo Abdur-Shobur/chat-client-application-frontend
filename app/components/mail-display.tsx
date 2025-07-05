@@ -44,6 +44,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { toast } from '@/hooks/use-toast';
 import { confirm } from '@/lib/confirm';
+import { Badge } from '@/components/ui/badge';
+import { GroupType } from '@/store/features/group/group.api-slice';
 
 export function MailDisplay() {
 	const formRef = useRef<HTMLFormElement>(null);
@@ -84,6 +86,13 @@ export function MailDisplay() {
 			type: searchParams.get('type') || 'personal',
 		});
 
+	const activeUserIds = new Set(activeUsers?.map((user) => user._id));
+	const members = (userOrGroupInfo?.data as any)?.members || [];
+
+	const activeCount = members?.filter((member: any) =>
+		activeUserIds.has(member._id)
+	).length;
+
 	useEffect(() => {
 		if (messagesEndRef.current && page === 1 && messages.length > 0) {
 			messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -109,21 +118,11 @@ export function MailDisplay() {
 				);
 				const combined = [...newMessages, ...merged];
 
-				// return updatedMessages;
-				// return [...newMessages, ...merged];
 				return combined.sort(
 					(a, b) =>
 						new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
 				);
 			});
-
-			// setMessages((prev) => {
-			// 	const newMessages = initialMessages.data.data.filter(
-			// 		(msg) => !prev.some((existing) => existing._id === msg._id)
-			// 	);
-
-			// 	return [...newMessages, ...prev];
-			// });
 		}
 	}, [initialMessages, isSuccess]);
 
@@ -201,15 +200,18 @@ export function MailDisplay() {
 
 					if (!message) return;
 
+					setShouldScroll(false);
 					if (!isAdmin) {
-						setShouldScroll(false);
-						refetch();
-
-						if (message.visibility === 'private') {
-							setMessages((prev) =>
-								prev.filter((msg) => msg._id !== message.messageId)
-							);
+						if (
+							message.visibility === 'private' &&
+							message.sender._id !== session.user.id
+						) {
+							setMessages((prev) => {
+								return prev.filter((msg) => msg._id !== message.messageId);
+							});
 							return;
+						} else {
+							refetch();
 						}
 					}
 
@@ -297,93 +299,6 @@ export function MailDisplay() {
 			formRef.current?.requestSubmit();
 		}
 	};
-
-	/*
-	const handleSend = async (e: React.FormEvent<HTMLFormElement>) => {
-		e.preventDefault();
-
-		if (!input.trim() || !session?.user?.id) return;
-
-		let socket = getSocket();
-
-		if (!socket || !socket.connected) {
-			console.warn('Socket not connected. Attempting to reconnect...');
-
-			try {
-				socket = await connectSocket();
-			} catch (err) {
-				console.error('❌ Could not reconnect socket:', err);
-				return;
-			}
-		}
-
-		if (!socket || !socket.connected) {
-			console.error('❌ Socket still not connected after retry');
-			return;
-		}
-
-		// Build message with reply info if available
-		const newMessage = {
-			sender: session.user.id,
-			receiver: params.id.toString(),
-			chatType:
-				searchParams.get('type') === 'personal'
-					? 'personal'
-					: ('group' as 'group' | 'personal'),
-			text: input,
-			type: 'text',
-			visibility:
-				session.user.role === 'admin'
-					? personalMessage
-						? 'private'
-						: 'public'
-					: 'private',
-			createdAt: new Date().toISOString(),
-
-			// Add replyTo and replyToUser if replying
-			...(personalMessage
-				? {
-						replyTo: personalMessage._id,
-						replyToUser: personalMessage.sender._id,
-				  }
-				: {}),
-		};
-
-		socket.emit('sendMessage', newMessage);
-
-		// Optimistically update UI including reply info
-		const messageUpdate: Message = {
-			...newMessage,
-			_id: new Date().toISOString(),
-			visibility: 'private',
-			replyToUser: personalMessage?.sender,
-			replyTo: personalMessage ?? undefined,
-			type: 'text' as 'text',
-			sender: {
-				_id: session.user.id,
-				name: 'You',
-				phone: '',
-			},
-		};
-		// setShouldScroll(true);
-		setMessages((prevMessages) => [...prevMessages, messageUpdate]);
-
-		// Clear reply state after sending
-		setPersonalMessage(null);
-
-		// Reset input and refetch
-		(e.target as HTMLFormElement).reset();
-		setInput('');
-		refetchMessages();
-
-		// 👇 Scroll to bottom
-		setTimeout(() => {
-			if (messagesEndRef.current) {
-				messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-			}
-		}, 100);
-	};
-	*/
 
 	const handleSend = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -593,6 +508,9 @@ export function MailDisplay() {
 								</span>
 							</div>
 						</div>
+						{session.user.role === 'admin' && (
+							<Badge>Active: {activeCount || 0}</Badge>
+						)}
 						{type === 'group' &&
 							userOrGroupInfo?.data.name &&
 							session.user.role !== 'admin' && (

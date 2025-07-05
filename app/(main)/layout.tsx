@@ -23,7 +23,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 					{children}
 				</div>
 			) : (
-				<div className="grid grid-cols-12 min-h-screen">
+				<div className="grid grid-cols-12 min-h-[100svh]">
 					{/* Inbox column - only visible for admin */}
 
 					<div
