@@ -79,6 +79,18 @@ export const api = apiSlice.injectEndpoints({
 			}),
 			invalidatesTags: ['Messages'],
 		}),
+
+		deleteMessage: builder.mutation<
+			ApiResponse<Message>,
+			{ messageId: string }
+		>({
+			query: ({ messageId }) => ({
+				url: `/messages/${messageId}`,
+				method: 'DELETE',
+				body: { messageId },
+			}),
+			invalidatesTags: ['Messages'],
+		}),
 	}),
 });
 
@@ -88,4 +100,5 @@ export const {
 	useUpdateVisibilityMutation,
 	useLazyGetChatMessagesQuery,
 	useInfoUserOrGroupQuery,
+	useDeleteMessageMutation,
 } = api;

@@ -159,7 +159,7 @@ export default function Inbox() {
 						<div className="flex flex-col items-center gap-2 p-4 pt-0">
 							<Alert className="flex gap-2 align-center ">
 								<InboxIcon className="h-4 w-4 !top-3" />
-								<AlertTitle className="mb-0">No Chat Found</AlertTitle>
+								<AlertTitle className="mb-0">No Message Found</AlertTitle>
 							</Alert>
 						</div>
 					)}

@@ -7,7 +7,17 @@ import {
 	useInfoUserOrGroupQuery,
 } from '@/store/features/message';
 import { format } from 'date-fns/format';
-import { ChevronLeft, Copy, Eye, EyeOff, Inbox, Reply, X } from 'lucide-react';
+import {
+	ChevronLeft,
+	Copy,
+	Eye,
+	EyeOff,
+	Inbox,
+	MoreVertical,
+	Reply,
+	Trash,
+	X,
+} from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 // import { Calendar } from '@/components/ui/calendar';
@@ -25,6 +35,15 @@ import { Alert, AlertTitle } from '@/components/ui/alert';
 import GroupLeave from '@/store/features/group/group.leave';
 import { UserType } from '@/store/features/user';
 import { MessageComponent } from '@/lib';
+import MessageDelete from '@/store/features/message/message.delete';
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { toast } from '@/hooks/use-toast';
+import { confirm } from '@/lib/confirm';
 
 export function MailDisplay() {
 	const formRef = useRef<HTMLFormElement>(null);
@@ -42,6 +61,7 @@ export function MailDisplay() {
 	const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 	const [page, setPage] = useState(1);
 	const [activeUsers, setActiveUsers] = useState<UserType[]>([]);
+	const [shouldScroll, setShouldScroll] = useState(true);
 
 	const {
 		data: initialMessages,
@@ -69,12 +89,10 @@ export function MailDisplay() {
 			messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
 		}
 	}, [messages]);
-
 	useEffect(() => {
 		if (isSuccess && initialMessages) {
 			setMessages((prev) => {
 				const updatedMessages = initialMessages.data.data;
-
 				const incomingMap = new Map(
 					updatedMessages.map((msg) => [msg._id, msg])
 				);
@@ -118,11 +136,12 @@ export function MailDisplay() {
 		if (page === 1) {
 			// On first load or new chat, scroll to bottom
 			scrollEl.scrollTop = scrollEl.scrollHeight;
-		} else {
+		} else if (shouldScroll) {
 			// Maintain scroll position after loading older messages
+
 			scrollEl.scrollTop = scrollEl.scrollHeight - oldScrollHeight.current;
 		}
-	}, [messages]);
+	}, [messages, shouldScroll]);
 
 	useEffect(() => {
 		const container = scrollContainerRef.current;
@@ -130,15 +149,18 @@ export function MailDisplay() {
 
 		const onScroll = () => {
 			if (
-				container.scrollTop < 100 &&
+				container.scrollTop < 120 &&
 				!isFetching &&
 				initialMessages?.data.meta.currentPage !== undefined &&
 				initialMessages?.data.meta.totalPages !== undefined &&
-				initialMessages?.data.meta.currentPage <
+				initialMessages?.data.meta.currentPage <=
 					initialMessages?.data.meta.totalPages
 			) {
 				oldScrollHeight.current = container.scrollHeight;
+				setShouldScroll(true);
 				setPage((prev) => prev + 1);
+			} else {
+				setShouldScroll(false);
 			}
 		};
 
@@ -157,14 +179,11 @@ export function MailDisplay() {
 				}
 
 				socket.emit('register', session.user.id);
-				const handleActiveUsers = (users: any[]) => {
-					setActiveUsers(users); // You'll need to define setActiveUsers in state
-				};
-
 				socket.emit('getActiveUsers');
 
-				socket.on('activeUsers', handleActiveUsers);
-				socket.on('activeUsersUpdated', handleActiveUsers);
+				const handleActiveUsers = (users: any[]) => {
+					setActiveUsers(users);
+				};
 
 				const handleReceiveMessage = (message: any) => {
 					if (
@@ -174,39 +193,53 @@ export function MailDisplay() {
 					) {
 						return;
 					}
-					return setMessages((prev) => [...prev, message]);
+					setMessages((prev) => [...prev, message]);
 				};
+
 				const handleVisibilityUpdate = (message: any) => {
 					const isAdmin = session.user.role === 'admin';
-					if (message) {
-						if (!isAdmin) {
-							refetch();
 
-							if (message.visibility === 'private') {
-								setMessages((prev) => {
-									return prev.filter((msg) => msg._id !== message.messageId);
-								});
-							}
+					if (!message) return;
+
+					if (!isAdmin) {
+						setShouldScroll(false);
+						refetch();
+
+						if (message.visibility === 'private') {
+							setMessages((prev) =>
+								prev.filter((msg) => msg._id !== message.messageId)
+							);
+							return;
 						}
-						setMessages((prev) =>
-							prev.map((msg) =>
-								msg._id === message._id
-									? { ...msg, visibility: message.visibility }
-									: msg
-							)
-						);
 					}
+
+					setMessages((prev) =>
+						prev.map((msg) =>
+							msg._id === message._id
+								? { ...msg, visibility: message.visibility }
+								: msg
+						)
+					);
 				};
 
-				socket.on('visibilityUpdated', handleVisibilityUpdate);
-				socket.on('receiveMessage', handleReceiveMessage);
+				const handleMessageDeleted = ({ messageId }: { messageId: string }) => {
+					setShouldScroll(false);
+					setMessages((prev) => prev.filter((msg) => msg._id !== messageId));
+				};
 
-				// Move this cleanup into the outer scope so useEffect can return it
+				socket.on('activeUsers', handleActiveUsers);
+				socket.on('activeUsersUpdated', handleActiveUsers);
+				socket.on('receiveMessage', handleReceiveMessage);
+				socket.on('visibilityUpdated', handleVisibilityUpdate);
+				socket.on('messageDeleted', handleMessageDeleted);
+
+				// Return cleanup function
 				return () => {
-					socket.off('activeUsers');
-					socket.off('activeUsersUpdated');
-					socket.off('receiveMessage');
-					socket.off('visibilityUpdated');
+					socket.off('activeUsers', handleActiveUsers);
+					socket.off('activeUsersUpdated', handleActiveUsers);
+					socket.off('receiveMessage', handleReceiveMessage);
+					socket.off('visibilityUpdated', handleVisibilityUpdate);
+					socket.off('messageDeleted', handleMessageDeleted);
 					socket.disconnect();
 				};
 			} catch (err) {
@@ -265,6 +298,7 @@ export function MailDisplay() {
 		}
 	};
 
+	/*
 	const handleSend = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 
@@ -331,7 +365,7 @@ export function MailDisplay() {
 				phone: '',
 			},
 		};
-
+		// setShouldScroll(true);
 		setMessages((prevMessages) => [...prevMessages, messageUpdate]);
 
 		// Clear reply state after sending
@@ -341,6 +375,78 @@ export function MailDisplay() {
 		(e.target as HTMLFormElement).reset();
 		setInput('');
 		refetchMessages();
+
+		// 👇 Scroll to bottom
+		setTimeout(() => {
+			if (messagesEndRef.current) {
+				messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+			}
+		}, 100);
+	};
+	*/
+
+	const handleSend = async (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+
+		if (!input.trim() || !session?.user?.id) return;
+
+		let socket = getSocket();
+
+		if (!socket || !socket.connected) {
+			console.warn('Socket not connected. Attempting to reconnect...');
+
+			try {
+				socket = await connectSocket();
+			} catch (err) {
+				console.error('❌ Could not reconnect socket:', err);
+				return;
+			}
+		}
+
+		if (!socket || !socket.connected) {
+			console.error('❌ Socket still not connected after retry');
+			return;
+		}
+
+		// Build message with reply info if available
+		const newMessage = {
+			sender: session.user.id,
+			receiver: params.id.toString(),
+			chatType:
+				searchParams.get('type') === 'personal'
+					? 'personal'
+					: ('group' as 'group' | 'personal'),
+			text: input,
+			type: 'text',
+			visibility:
+				session.user.role === 'admin'
+					? personalMessage
+						? 'private'
+						: 'public'
+					: 'private',
+			createdAt: new Date().toISOString(),
+
+			// Add replyTo and replyToUser if replying
+			...(personalMessage
+				? {
+						replyTo: personalMessage._id,
+						replyToUser: personalMessage.sender._id,
+				  }
+				: {}),
+		};
+
+		// Emit to backend — let it broadcast the saved message
+		socket.emit('sendMessage', newMessage);
+
+		// Clear reply state after sending
+		setPersonalMessage(null);
+
+		// Reset input field
+		(e.target as HTMLFormElement).reset();
+		setInput('');
+
+		// Refetch if you need fresh data (optional if real-time is working)
+		refetchMessages?.();
 
 		// 👇 Scroll to bottom
 		setTimeout(() => {
@@ -378,6 +484,66 @@ export function MailDisplay() {
 					msg._id === messageId ? { ...msg, visibility: newVisibility } : msg
 				)
 			);
+		}
+	};
+
+	const handleDeleteMessage = async (messageId: string) => {
+		let socket = getSocket();
+
+		if (!socket || !socket.connected) {
+			try {
+				socket = await connectSocket();
+			} catch (err) {
+				console.error('Socket not connected:', err);
+				toast({
+					title: 'Error',
+					description: 'Socket connection failed',
+					variant: 'destructive',
+				});
+				return;
+			}
+		}
+
+		if (socket) {
+			setShouldScroll(false);
+			socket.emit('deleteMessage', { messageId });
+
+			// Optional: Optimistically remove from UI
+			setMessages((prev) => prev.filter((msg) => msg._id !== messageId));
+		}
+	};
+
+	const handleDelete = async (id: string) => {
+		const confirmed = await confirm({
+			message: 'This will delete the message. Are you sure?',
+			CustomComponent: (
+				<div className="mb-4">
+					<h2 className="text-lg font-semibold text-gray-900">
+						Delete Message
+					</h2>
+					<p className="mt-1 text-sm text-gray-600">
+						Are you sure you want to delete this message? This action cannot be
+						undone.
+					</p>
+				</div>
+			),
+		});
+
+		if (!confirmed) return;
+
+		try {
+			await handleDeleteMessage(id);
+
+			toast({
+				title: 'Success',
+				description: 'Message deleted successfully',
+			});
+		} catch (error) {
+			toast({
+				title: 'Error',
+				description: 'Failed to delete message',
+				variant: 'destructive',
+			});
 		}
 	};
 
@@ -439,7 +605,7 @@ export function MailDisplay() {
 					ref={scrollContainerRef}
 					className="h-[calc(100vh-150px)] md:h-[calc(100vh-230px)] overflow-y-auto"
 				>
-					<div className="flex flex-col gap-2 p-4  max-w-[90%] mx-auto">
+					<div className="flex flex-col gap-2 p-4  max-w-full sm:max-w-[90%] mx-auto">
 						<div className="flex flex-col h-full">
 							<div className=" flex-1 space-y-4 overflow-y-auto sm:p-4">
 								{(isLoading || isFetching) && (
@@ -491,59 +657,142 @@ export function MailDisplay() {
 													<span className="text-sm text-muted-foreground">
 														{format(new Date(message.createdAt), 'p')}
 													</span>
-													{session?.user.role === 'admin' &&
-														message.sender?._id !== session?.user.id && (
-															<div className="opacity-0 group-hover:opacity-100 flex items-center gap-2">
-																<Button
-																	variant="ghost"
-																	size="icon"
-																	className="h-8 w-8"
-																	onClick={() => {
-																		navigator.clipboard.writeText(
-																			message.text || ''
-																		);
-																	}}
-																>
-																	<Copy className="h-4 w-4" />
-																</Button>
 
-																<Button
-																	type="button"
-																	onClick={() => {
-																		setPersonalMessage(message);
-																		if (inputRef.current) {
-																			inputRef.current.focus();
+													{session?.user.role === 'admin' && (
+														<>
+															<div className="group-hover:visible group-hover:opacity-100 hidden md:flex items-center gap-2 opacity-0 invisible">
+																{/* Desktop Buttons */}
+																<div className="hidden md:flex items-center gap-2">
+																	<MessageDelete
+																		handleDelete={() =>
+																			handleDelete(message._id)
 																		}
-																	}}
-																	variant="ghost"
-																	size="icon"
-																	className="h-8 w-8"
-																>
-																	<Reply className="h-4 w-4" />
-																</Button>
+																	/>
 
-																{type === 'group' && (
-																	<Button
-																		aria-label="Toggle visibility"
-																		variant="ghost"
-																		size="icon"
-																		className="h-8 w-8"
-																		onClick={() =>
-																			handleToggleVisibility(
-																				message._id,
-																				message.visibility
-																			)
-																		}
-																	>
-																		{message.visibility === 'public' ? (
-																			<Eye className="text-green-500" />
-																		) : (
-																			<EyeOff className="text-red-500" />
-																		)}
-																	</Button>
-																)}
+																	{message.sender?._id !== session?.user.id && (
+																		<>
+																			<Button
+																				variant="ghost"
+																				size="icon"
+																				className="h-8 w-8"
+																				onClick={() =>
+																					navigator.clipboard.writeText(
+																						message.text || ''
+																					)
+																				}
+																			>
+																				<Copy className="h-4 w-4" />
+																			</Button>
+
+																			<Button
+																				type="button"
+																				onClick={() => {
+																					setPersonalMessage(message);
+																					inputRef.current?.focus();
+																				}}
+																				variant="ghost"
+																				size="icon"
+																				className="h-8 w-8"
+																			>
+																				<Reply className="h-4 w-4" />
+																			</Button>
+
+																			{type === 'group' && (
+																				<Button
+																					aria-label="Toggle visibility"
+																					variant="ghost"
+																					size="icon"
+																					className="h-8 w-8"
+																					onClick={() =>
+																						handleToggleVisibility(
+																							message._id,
+																							message.visibility
+																						)
+																					}
+																				>
+																					{message.visibility === 'public' ? (
+																						<Eye className="text-green-500" />
+																					) : (
+																						<EyeOff className="text-red-500" />
+																					)}
+																				</Button>
+																			)}
+																		</>
+																	)}
+																</div>
 															</div>
-														)}
+															{/* Mobile Dropdown Menu */}
+															<div className="md:hidden">
+																<DropdownMenu>
+																	<DropdownMenuTrigger asChild>
+																		<Button
+																			variant="ghost"
+																			size="icon"
+																			className="h-8 w-8"
+																		>
+																			<MoreVertical className="h-4 w-4" />
+																		</Button>
+																	</DropdownMenuTrigger>
+																	<DropdownMenuContent className="w-48">
+																		{message.sender?._id !==
+																			session?.user.id && (
+																			<>
+																				<DropdownMenuItem
+																					onClick={() =>
+																						handleToggleVisibility(
+																							message._id,
+																							message.visibility
+																						)
+																					}
+																				>
+																					{message.visibility === 'public' ? (
+																						<span className="flex items-center text-green-600">
+																							<Eye className="w-4 h-4 mr-2" />
+																							Make Private
+																						</span>
+																					) : (
+																						<span className="flex items-center text-red-600">
+																							<EyeOff className="w-4 h-4 mr-2" />
+																							Make Public
+																						</span>
+																					)}
+																				</DropdownMenuItem>
+
+																				<DropdownMenuItem
+																					onClick={() => {
+																						navigator.clipboard.writeText(
+																							message.text || ''
+																						);
+																					}}
+																				>
+																					<Copy className="w-4 h-4 mr-2" />
+																					Copy Message
+																				</DropdownMenuItem>
+
+																				<DropdownMenuItem
+																					onClick={() => {
+																						setPersonalMessage(message);
+																						inputRef.current?.focus();
+																					}}
+																				>
+																					<Reply className="w-4 h-4 mr-2" />
+																					Reply
+																				</DropdownMenuItem>
+																			</>
+																		)}
+
+																		<DropdownMenuItem
+																			onClick={() => handleDelete(message._id)}
+																			className="text-red-600"
+																		>
+																			<Trash className="w-4 h-4 mr-2" />
+																			Delete
+																		</DropdownMenuItem>
+																	</DropdownMenuContent>
+																</DropdownMenu>
+															</div>
+														</>
+													)}
 												</div>
 
 												{session?.user.role === 'admin' &&
@@ -563,16 +812,16 @@ export function MailDisplay() {
 													</div>
 												)}
 												<div
-													className={`p-2 sm:p-3 rounded-lg rounded-br-none ${
+													className={`p-2 sm:p-3 rounded-lg  ${
 														message.sender?._id !== session?.user.id
-															? 'bg-muted/50'
-															: 'bg-blue-100'
+															? session?.user.role === 'admin' &&
+															  message.visibility === 'public'
+																? 'bg-green-100 rounded-tl-none'
+																: 'bg-black/10 rounded-tl-none'
+															: 'bg-blue-100 rounded-br-none'
 													}`}
 												>
 													<MessageComponent message={message} />
-													{/* <div className="text-sm whitespace-pre-wrap">
-														{message.text}
-													</div> */}
 												</div>
 											</div>
 										</div>
@@ -615,7 +864,7 @@ export function MailDisplay() {
 											</button>
 										</div>
 									)}
-									<Input
+									{/* <Input
 										ref={inputRef as React.RefObject<HTMLInputElement>}
 										value={input}
 										onChange={(e) => setInput(e.target.value)}
@@ -623,14 +872,14 @@ export function MailDisplay() {
 										onKeyDown={handleKeyDown}
 										className="md:hidden md:invisible flex-1"
 										placeholder={`Type your message...`}
-									/>
+									/> */}
 									<Textarea
 										ref={inputRef as React.RefObject<HTMLTextAreaElement>}
 										value={input}
 										onChange={(e) => setInput(e.target.value)}
 										name="message"
 										onKeyDown={handleKeyDown}
-										className="hidden invisible md:visible md:block resize-none"
+										className="visible block resize-none py-1 md:py-2 h-7 min-h-[42px] md:min-h-[60px]"
 										placeholder={`Type your message...`}
 									/>
 									<div className="flex items-end">

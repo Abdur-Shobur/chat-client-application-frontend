@@ -26,8 +26,6 @@ export default function GroupJoin() {
 		{ skip: !groupId || type !== 'group' }
 	);
 
-	console.log(groupData?.data.name);
-
 	const [joinGroup, { isLoading: joining }] = useGroupJoinMutation();
 
 	// Check if user is already a member
@@ -67,7 +65,6 @@ export default function GroupJoin() {
 				router.push(`/${groupId}?type=group`);
 			}
 		} catch (err: any) {
-			console.log(err);
 			if (err.data?.message === 'You are already a member of this group.') {
 				setOpen(false);
 				router.push(`/${groupId}?type=group`);
