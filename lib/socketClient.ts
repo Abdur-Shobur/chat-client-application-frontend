@@ -31,20 +31,9 @@ export const connectSocket = async (): Promise<Socket | null> => {
 		return socket;
 	}
 
-	// if (!socket) {
-	// 	socket = io(env.next_auth_url, {
-	// 		path: '/backend/socket.io',
-	// 		auth: {
-	// 			token: session.accessToken,
-	// 		},
-	// 		autoConnect: false, // Important!
-	// 		transports: ['websocket'],
-	// 	});
-	// }
-
 	if (!socket) {
-		socket = io(env.baseRoute, {
-			// path: env.development ? '/socket.io' : '/backend/socket.io',
+		socket = io(env.next_auth_url, {
+			path: '/backend/socket.io',
 			auth: {
 				token: session.accessToken,
 			},
@@ -52,6 +41,17 @@ export const connectSocket = async (): Promise<Socket | null> => {
 			transports: ['websocket'],
 		});
 	}
+
+	// if (!socket) {
+	// 	socket = io(env.baseRoute, {
+	// 		// path: env.development ? '/socket.io' : '/backend/socket.io',
+	// 		auth: {
+	// 			token: session.accessToken,
+	// 		},
+	// 		autoConnect: false, // Important!
+	// 		transports: ['websocket'],
+	// 	});
+	// }
 
 	return new Promise((resolve, reject) => {
 		socket!.auth = { token: session.accessToken }; // Re-assign token in case it changed
