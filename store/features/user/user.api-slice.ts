@@ -35,6 +35,24 @@ export const api = apiSlice.injectEndpoints({
 			invalidatesTags: ['Users'],
 		}),
 
+		profileUpdate: builder.mutation<ApiResponse<UserType>, any>({
+			query: (payload) => ({
+				url: `user/profile`,
+				method: 'PUT',
+				body: payload,
+			}),
+			invalidatesTags: ['Users'],
+		}),
+
+		passwordUpdate: builder.mutation<ApiResponse<UserType>, any>({
+			query: (payload) => ({
+				url: `user/password`,
+				method: 'PUT',
+				body: payload,
+			}),
+			invalidatesTags: ['Users'],
+		}),
+
 		statusUser: builder.mutation<
 			ApiResponse<UserType>,
 			{ id: string; status: string }
@@ -64,4 +82,6 @@ export const {
 	useStoreUserMutation,
 	useDeleteUserMutation,
 	useUpdateUserMutation,
+	useProfileUpdateMutation,
+	usePasswordUpdateMutation,
 } = api;

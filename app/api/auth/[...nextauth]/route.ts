@@ -17,6 +17,7 @@ const handler = NextAuth({
 				token: {},
 			},
 			async authorize(credentials) {
+				console.log(credentials);
 				if (credentials?.token) {
 					const parsedToken = JSON.parse(credentials.token);
 
@@ -35,7 +36,10 @@ const handler = NextAuth({
 		strategy: 'jwt',
 	},
 	callbacks: {
-		async jwt({ token, user }) {
+		async jwt({ token, user, trigger, session }) {
+			if (trigger === 'update') {
+				return session;
+			}
 			// On initial login, `user` is available
 			if (user) {
 				const customUser = user as CustomUser;
@@ -50,7 +54,11 @@ const handler = NextAuth({
 			return token;
 		},
 
-		async session({ session, token }) {
+		async session({ session, token, trigger }) {
+			if (trigger === 'update') {
+				const customUser = token.user;
+				console.log({ session }, 's');
+			}
 			// Map token properties to session
 			session.accessToken = token.accessToken as string;
 			session.refreshToken = token.refreshToken as string;

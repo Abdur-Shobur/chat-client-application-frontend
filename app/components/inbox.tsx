@@ -15,7 +15,9 @@ import { Badge } from '@/components/ui/badge';
 import { connectSocket } from '@/lib/socketClient';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertTitle } from '@/components/ui/alert';
-import { Inbox as InboxIcon } from 'lucide-react';
+import { Inbox as InboxIcon, Settings } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ProfileSettingsDialog } from '@/store/features/user/admin.profice';
 // import { socket } from '@/lib/socketClient';
 
 export default function Inbox() {
@@ -77,16 +79,21 @@ export default function Inbox() {
 
 	return (
 		<Tabs defaultValue="all">
-			<div className="flex items-center justify-between gap-5 px-5 py-4">
+			<div className="flex items-center justify-between gap-5 px-5 py-4  ">
 				<div className="flex items-center gap-2">
 					<Link href="/" className="text-xl font-bold capitalize">
 						{session?.user.name || 'Inbox'}
 					</Link>
 					{isAdmin && <GroupCreate />}
 				</div>
-				{isAdmin && <Badge variant="outline">Admin</Badge>}
-				{isUser && <Badge variant="secondary">User</Badge>}
+
+				<div className="flex items-center gap-2">
+					{isAdmin && <ProfileSettingsDialog />}
+
+					{isUser && <Badge variant="secondary">User</Badge>}
+				</div>
 			</div>
+
 			<Separator />
 			<div className="bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
 				<div className="relative">

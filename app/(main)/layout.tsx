@@ -1,12 +1,14 @@
 'use client';
 
 import Inbox from '@/app/components/inbox';
+import useViewportHeight from '@/hooks/useViewportHeight';
 import GroupJoin from '@/store/features/group/group.join';
 import { useSession } from 'next-auth/react';
 import { useParams } from 'next/navigation';
 import React from 'react';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
+	useViewportHeight();
 	const params = useParams();
 	const isDetailPage = Boolean(params?.id);
 	const { data: session } = useSession();
@@ -23,7 +25,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 					{children}
 				</div>
 			) : (
-				<div className="grid grid-cols-12 min-h-[100svh]">
+				<div className="grid grid-cols-12 screen-height">
 					{/* Inbox column - only visible for admin */}
 
 					<div

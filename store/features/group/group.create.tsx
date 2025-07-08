@@ -35,12 +35,10 @@ import {
 } from '@/components/ui/select';
 import { SquarePen } from 'lucide-react';
 import { useGroupCreateMutation } from './group.api-slice';
-import GroupUsers from './group.users';
 import { toast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 
 // fake users for member select simulation
-const mockUsers = [{ id: '67b2c9fc32c98e2ba9cce8d2', name: 'John Doe' }];
 
 const groupSchema = z.object({
 	name: z.string().min(1, 'Group name is required'),
@@ -57,7 +55,6 @@ type GroupSchema = z.infer<typeof groupSchema>;
 export function GroupCreate() {
 	const router = useRouter();
 	const [createGroup, { isLoading }] = useGroupCreateMutation();
-	const [step, setStep] = useState<1 | 2>(1); // Step 1: Group Info, Step 2: Select Members
 	const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
 	const [open, setOpen] = useState(false);
 
@@ -110,12 +107,6 @@ export function GroupCreate() {
 				});
 			}
 		}
-	};
-
-	const toggleMember = (id: string) => {
-		setSelectedMembers((prev) =>
-			prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]
-		);
 	};
 
 	return (

@@ -28,7 +28,6 @@ import { cn } from '@/lib/utils';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { connectSocket, getSocket } from '@/lib/socketClient';
-import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import { GroupInfo } from '@/store/features/group/group-info-modal';
 import { Alert, AlertTitle } from '@/components/ui/alert';
@@ -45,7 +44,6 @@ import {
 import { toast } from '@/hooks/use-toast';
 import { confirm } from '@/lib/confirm';
 import { Badge } from '@/components/ui/badge';
-import { GroupType } from '@/store/features/group/group.api-slice';
 
 export function MailDisplay() {
 	const formRef = useRef<HTMLFormElement>(null);
@@ -64,7 +62,6 @@ export function MailDisplay() {
 	const [page, setPage] = useState(1);
 	const [activeUsers, setActiveUsers] = useState<UserType[]>([]);
 	const [shouldScroll, setShouldScroll] = useState(true);
-
 	const {
 		data: initialMessages,
 		isSuccess,
@@ -94,7 +91,12 @@ export function MailDisplay() {
 	).length;
 
 	useEffect(() => {
-		if (messagesEndRef.current && page === 1 && messages.length > 0) {
+		if (
+			messagesEndRef.current &&
+			page === 1 &&
+			messages.length > 0 &&
+			shouldScroll
+		) {
 			messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
 		}
 	}, [messages]);
@@ -134,10 +136,11 @@ export function MailDisplay() {
 
 		if (page === 1) {
 			// On first load or new chat, scroll to bottom
-			scrollEl.scrollTop = scrollEl.scrollHeight;
+			if (shouldScroll) {
+				scrollEl.scrollTop = scrollEl.scrollHeight;
+			}
 		} else if (shouldScroll) {
 			// Maintain scroll position after loading older messages
-
 			scrollEl.scrollTop = scrollEl.scrollHeight - oldScrollHeight.current;
 		}
 	}, [messages, shouldScroll]);
@@ -159,7 +162,7 @@ export function MailDisplay() {
 				setShouldScroll(true);
 				setPage((prev) => prev + 1);
 			} else {
-				setShouldScroll(false);
+				// setShouldScroll(false);
 			}
 		};
 
@@ -215,13 +218,21 @@ export function MailDisplay() {
 						}
 					}
 
-					setMessages((prev) =>
-						prev.map((msg) =>
+					setMessages((prev) => {
+						// Update visibility if message._id matches
+						const updated = prev.map((msg) =>
 							msg._id === message._id
 								? { ...msg, visibility: message.visibility }
 								: msg
-						)
-					);
+						);
+
+						// Sort by createdAt ascending
+						return updated.sort(
+							(a, b) =>
+								new Date(a.createdAt).getTime() -
+								new Date(b.createdAt).getTime()
+						);
+					});
 				};
 
 				const handleMessageDeleted = ({ messageId }: { messageId: string }) => {
@@ -386,6 +397,7 @@ export function MailDisplay() {
 			}
 		}
 
+		setShouldScroll(false);
 		const newVisibility = currentVisibility === 'public' ? 'private' : 'public';
 
 		if (socket) {

@@ -63,7 +63,7 @@ export const api = apiSlice.injectEndpoints({
 			ApiResponseMeta<Message[]>,
 			{ chatType: string; targetId: string; limit?: number; page: number }
 		>({
-			query: ({ chatType, targetId, limit = 10, page }) =>
+			query: ({ chatType, targetId, limit = 20, page }) =>
 				`/messages/chat-messages/${chatType}/${targetId}?page=${page}&limit=${limit}`,
 			providesTags: ['Messages'],
 		}),
