@@ -19,13 +19,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 const TempLoginSchema = z.object({
 	name: z.string().min(1, { message: 'Name is required' }),
-	phone: z
-		.string()
-		.min(10)
-		.max(15)
-		.regex(/^[0-9]+$/, {
-			message: 'Invalid phone number',
-		}),
+	phone: z.string().regex(/^01[0-9]{9}$/, {
+		message: 'Phone number must be valid number',
+	}),
 });
 
 export default function TempLoginForm() {
@@ -41,6 +37,9 @@ export default function TempLoginForm() {
 			name: '',
 			phone: '',
 		},
+		mode: 'onSubmit',
+		shouldFocusError: false,
+		reValidateMode: 'onSubmit',
 	});
 
 	const onSubmit = async (data: z.infer<typeof TempLoginSchema>) => {
@@ -102,7 +101,16 @@ export default function TempLoginForm() {
 						<FormItem>
 							<FormLabel>Phone</FormLabel>
 							<FormControl>
-								<Input placeholder="Phone number" {...field} />
+								<Input
+									placeholder="Phone number"
+									{...field}
+									onChange={(e) => {
+										field.onChange(e); // maintain hook form state
+										if (form.formState.isSubmitted) {
+											form.clearErrors('phone'); // clear error on first change
+										}
+									}}
+								/>
 							</FormControl>
 							<FormMessage />
 						</FormItem>
