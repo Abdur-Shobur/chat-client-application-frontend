@@ -333,6 +333,7 @@ export function MailDisplay() {
 			console.error('❌ Socket still not connected after retry');
 			return;
 		}
+		setShouldScroll(false);
 
 		// Build message with reply info if available
 		const newMessage = {
@@ -533,7 +534,7 @@ export function MailDisplay() {
 				<Separator />
 				<div
 					ref={scrollContainerRef}
-					className="h-[calc(100vh-150px)] md:h-[calc(100vh-230px)] overflow-y-auto"
+					className="h-[calc(var(--vh,1vh)_*100-150px)] md:h-[calc(var(--vh,1vh)_*100-230px)] overflow-y-auto"
 				>
 					<div className="flex flex-col gap-2 p-4  max-w-full sm:max-w-[90%] mx-auto">
 						<div className="flex flex-col h-full">
