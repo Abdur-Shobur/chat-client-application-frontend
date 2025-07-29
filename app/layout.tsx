@@ -1,8 +1,8 @@
-import type { Metadata } from 'next';
-import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { RootProviders } from '@/provider';
+import type { Metadata } from 'next';
 import localFont from 'next/font/local';
+import './globals.css';
 
 export const metadata: Metadata = {
 	title: 'Chat On',
@@ -24,6 +24,7 @@ export default function RootLayout({
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
+	throw new Error('Server components is not supported.');
 	return (
 		<html lang="en">
 			<body className={`${geistSans.variable} ${geistMono.variable}`}>

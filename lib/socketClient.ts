@@ -12,8 +12,8 @@
 // 		return { token: session.accessToken };
 // 	},
 // });
-import { io, Socket } from 'socket.io-client';
 import { getSession } from 'next-auth/react';
+import { io, Socket } from 'socket.io-client';
 import { env } from './env';
 
 let socket: Socket | null = null;
@@ -54,12 +54,12 @@ export const connectSocket = async (): Promise<Socket | null> => {
 	}
 
 	// if (!socket) {
-	// 	socket = io(env.baseRoute, {
-	// 		// path: env.development ? '/socket.io' : '/backend/socket.io',
+	// 	socket = io(`https://zoom.com.im`, {
+	// 		path: '/backend/socket.io',
 	// 		auth: {
 	// 			token: session.accessToken,
 	// 		},
-	// 		autoConnect: false, // Important!
+	// 		autoConnect: false,
 	// 		transports: ['websocket'],
 	// 	});
 	// }

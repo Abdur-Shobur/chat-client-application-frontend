@@ -1,6 +1,6 @@
 import { getToken as getNextToken } from 'next-auth/jwt';
-import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
 export async function middleware(request: NextRequest) {
 	const { pathname, searchParams } = request.nextUrl;

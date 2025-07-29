@@ -44,6 +44,7 @@ import {
 import { toast } from '@/hooks/use-toast';
 import { confirm } from '@/lib/confirm';
 import { Badge } from '@/components/ui/badge';
+import { formatMessageTime } from '@/lib/timeformat';
 
 export function MailDisplay() {
 	const formRef = useRef<HTMLFormElement>(null);
@@ -586,7 +587,14 @@ export function MailDisplay() {
 													</span>
 
 													<span className="text-sm text-muted-foreground">
-														{format(new Date(message.createdAt), 'p')}
+														{/* {format(new Date(message.createdAt), 'p')} */}
+														{/* {format(new Date(message.createdAt), 'PPpp')} */}
+														{/* {format(
+															new Date(message.createdAt),
+															'MMM d, h:mm a'
+														)} */}
+
+														{formatMessageTime(message.createdAt)}
 													</span>
 
 													{session?.user.role === 'admin' && (
